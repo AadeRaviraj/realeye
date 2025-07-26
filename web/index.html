@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes"> <!-- Add this line -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="realeyes">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>realeyes</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Add Firebase SDK (Compatibility Version) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script>
+    // Your Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyB-7w5qj0aNrHoP8PrnGiL3soIvYSTNctU",
+      authDomain: "realeye-6739d.firebaseapp.com",
+      databaseURL: "https://realeye-6739d-default-rtdb.firebaseio.com",
+      projectId: "realeye-6739d",
+      storageBucket: "realeye-6739d.firebasestorage.app",
+      messagingSenderId: "501040465224",
+      appId: "1:501040465224:web:3e1688e3a17b5d5f5c1f7d",
+      measurementId: "G-E9ZVKMDJ0E"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    console.log("Firebase initialized successfully");
+  </script>
+
+  <!-- Define serviceWorkerVersion -->
+  <script>
+    const serviceWorkerVersion = '1.0.0'; // Define the service worker version
+  </script>
+
+  <!-- Flutter Web Initialization -->
+  <script src="flutter.js" defer></script>
+</head>
+<body>
+<script>
+    // Flutter web app initialization
+    window.addEventListener('load', function () {
+      // Initialize the Flutter app
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        },
+      }).then(function (engineInitializer) {
+        return engineInitializer.initializeEngine();
+      }).then(function (appRunner) {
+        return appRunner.runApp();
+      });
+    });
+  </script>
+</body>
+</html>

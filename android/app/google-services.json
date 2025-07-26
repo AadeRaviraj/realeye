@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "501040465224",
+    "firebase_url": "https://realeye-6739d-default-rtdb.firebaseio.com",
+    "project_id": "realeye-6739d",
+    "storage_bucket": "realeye-6739d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:501040465224:android:da163d366b1dbd575c1f7d",
+        "android_client_info": {
+          "package_name": "com.example.realeyes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcE7ubNny38ARibY2SoATHbAJGBUJRLBE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

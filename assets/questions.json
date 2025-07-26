@@ -1,0 +1,46 @@
+{
+"Python": {
+"Basic": [
+{
+"question": "What is Python?",
+"answer": "Python is a high-level, interpreted programming language known for its simplicity."
+},
+{
+"question": "What are Python's data types?",
+"answer": "Python has int, float, string, list, tuple, set, and dictionary."
+}
+],
+"Intermediate": [
+{
+"question": "What is a lambda function?",
+"answer": "A lambda function is an anonymous function in Python."
+}
+],
+"Advanced": [
+{
+"question": "What is the GIL (Global Interpreter Lock)?",
+"answer": "The GIL is a mutex that protects access to Python objects, preventing multiple threads from executing at once."
+}
+]
+},
+"Java": {
+"Basic": [
+{
+"question": "What is Java?",
+"answer": "Java is an object-oriented programming language used for building platform-independent applications."
+}
+],
+"Intermediate": [
+{
+"question": "Explain Java's memory management.",
+"answer": "Java uses automatic garbage collection to manage memory."
+}
+],
+"Advanced": [
+{
+"question": "What is multithreading in Java?",
+"answer": "Multithreading allows concurrent execution of two or more threads."
+}
+]
+}
+}
