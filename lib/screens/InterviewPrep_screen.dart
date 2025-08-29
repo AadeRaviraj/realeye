@@ -23,9 +23,12 @@ class _InterviewPrepScreenState extends State<InterviewPrepScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    //return Scaffold(
 
-      body: SingleChildScrollView(
+
+      return  SingleChildScrollView(
+
+
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,8 +51,8 @@ class _InterviewPrepScreenState extends State<InterviewPrepScreen> {
             // Build AI feedback section
           ],
         ),
-      ),
-    );
+      );
+   // );
   }
 
   // ===========================
@@ -229,7 +232,7 @@ class _InterviewPrepScreenState extends State<InterviewPrepScreen> {
     return Column(
       children: [
         SizedBox(height: 20), //  Add space between teh card and hoeizontal bar
-         Center(
+        Center(
           child: Card(
             elevation: 4,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -378,108 +381,3 @@ class _InterviewPrepScreenState extends State<InterviewPrepScreen> {
     );
   }
 }
-
-/*   This is alos design but in horizontal line
-//   Widget _buildFeedbackCard() {
-//     return Card(
-//       elevation: 4,
-//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//       child: Padding(
-//         padding: const EdgeInsets.all(16),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Text('📊 AI Feedback Summary',
-//                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-//             SizedBox(height: 12),
-//             _buildFeedbackItem('👀 Eye Contact', 0.75, Colors.green),
-//
-//             _buildFeedbackItem('🗣️ Speech Clarity', 0.80, Colors.blue),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-//
-//   // Feedback item builder
-//   Widget _buildFeedbackItem(String label, double score, Color color) {
-//     return Row(
-//       children: [
-//         Text(label),
-//         Expanded(child: LinearProgressIndicator(value: score, color: color)),
-//         Text('${(score * 100).toInt()}%'),
-//       ],
-//     );
-//   }
-// }
-
-
-
-//
-//   //design the card chang the size as per according , your thinking
-//   Widget _buildFeedbackItem(String label, double score, Color color) {
-//     return Row(
-//       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//       children: [
-//         Text(label, style: TextStyle(fontSize: 14)),
-//         SizedBox(width: 10),
-//         Expanded(
-//           child: LinearProgressIndicator(
-//             value: score,
-//             backgroundColor: Colors.grey[300],
-//             color: color,
-//             minHeight: 8,
-//             borderRadius: BorderRadius.circular(5),
-//           ),
-//         ),
-//         SizedBox(width: 8),
-//         Text('${(score * 100).toInt()}%',
-//             style: TextStyle(fontWeight: FontWeight.bold)),
-//       ],
-//     );
-//   }
-// }
-//
-
-
-//   Widget _buildFeedbackCard() {
-//     return Card(
-//       elevation: 4,
-//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//       child: Padding(
-//         padding: const EdgeInsets.all(16),
-//         child: Column(
-//           children: [
-//             Text(
-//               '📊 AI Feedback Summary',
-//               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-//             ),
-//             SizedBox(height: 8),
-//             _buildFeedbackItem('Eye Contact', 0.75),
-//             _buildFeedbackItem('Body Language', 0.60),
-//             _buildFeedbackItem('Speech Clarity', 0.80),
-//           ],
-//         ),
-//       ),
-//     );
-//
-// }
-//   Widget _buildFeedbackItem(String label, double score) {
-//     return Row(
-//       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//       children: [
-//         Text(label),
-//         SizedBox(width: 10),
-//         Expanded(
-//           child: LinearProgressIndicator(
-//             value: score,
-//             backgroundColor: Colors.grey[300],
-//             color: Colors.blue,
-//             minHeight: 8,
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }
-*/
