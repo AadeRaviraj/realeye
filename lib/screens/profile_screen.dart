@@ -1,55 +1,69 @@
-/*
-
-Author Name : Raviraj Aaade
-
-File : profile_screen.dart
-
-Date : 09-06-2025
-
-Program : To develop the Profile Screen
-
- */
-
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'signin_screen.dart';
-
+import 'package:confetti/confetti.dart';
 
 class ProfileScreen extends StatefulWidget {
-
-  // Call the Constructor For Add the realtime Data when Profile scrren is open
   const ProfileScreen({Key? key}) : super(key: key);
 
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
+class _ProfileScreenState extends State<ProfileScreen>
+
+    // handle the click actions
+    with SingleTickerProviderStateMixin {
   final _auth = FirebaseAuth.instance;
   final _dbRef = FirebaseDatabase.instance.ref().child('users');
   late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
   String _selectedPlan = 'Pro';
 
-  String _userName = '';  // declare  the userneme
+  String _userName = '';
   String _userEmail = '';
   String _userRole = '';
   bool _isLoading = true;
+  int _selectedTab = 0;
+  final ConfettiController _confettiController = ConfettiController(duration: const Duration(seconds: 2));
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+
+    // Initialize animations
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 1000),
     );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
     _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOut,
+      ),
     );
+
     _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _confettiController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadUserData() async {
@@ -58,7 +72,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       final snap = await _dbRef.child(user.uid).get();
       if (snap.exists) {
         setState(() {
-          _userName = snap.child('full_name').value?.toString() ?? ''; // user name is shown
+          _userName = snap.child('full_name').value?.toString() ?? '';
           _userEmail = user.email ?? '';
           _userRole = snap.child('role').value?.toString() ?? '';
           _isLoading = false;
@@ -75,150 +89,48 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
+  void _showAchievementCelebration() {
+    _confettiController.play();
+    Future.delayed(const Duration(seconds: 2), () {
+      _confettiController.stop();
+    });
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Scaffold(
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 280,
-            floating: false,
-            pinned: true,
-            flexibleSpace: LayoutBuilder(
-              builder: (context, constraints) {
-                final top = constraints.biggest.height;
-                final avatarSize = top > 200 ? 120.0 : 40.0;
-                final left = top > 200
-                    ? MediaQuery.of(context).size.width / 2 - avatarSize / 2
-                    : 16.0;
-                final bottom = top > 200 ? 80.0 : (kToolbarHeight - 40) / 2;
-
-                return Stack(
-                  children: [
-                    // Gradient background
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: isDark
-                              ? [Colors.blueGrey.shade800, Colors.blueGrey.shade900]
-                              : [Colors.blue.shade600, Colors.lightBlue.shade400],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                    ),
-                    // Avatar
-                    Positioned(
-                      left: left,
-                      bottom: bottom,
-                      child: Hero(
-                        tag: 'profile-picture',
-                        child: Container(
-                          width: avatarSize,
-                          height: avatarSize,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                            image: const DecorationImage(
-                              image: AssetImage('assets/images/angryp_cricle.png'),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Username
-                    if (top > 200)
-                      Positioned(
-                        bottom: 45,
-                        left: 0,
-                        right: 0,
-                        child: Text(
-                          _userName,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      )
-                    else
-                      Positioned(
-                        left: avatarSize + 24,
-                        bottom: (kToolbarHeight - 20) / 2,
-                        child: Text(
-                          _userName,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-            leading: const SizedBox(),
-          ),
-          SliverList(
-            delegate: SliverChildListDelegate([
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    _UserInfoTile(
-                      icon: Icons.email,
-                      title: 'Email',
-                      value: _userEmail,
-                    ),
-                    const SizedBox(height: 20),
-                    _StatsGrid(
-                      completed: 15,
-                      ongoing: 3,
-                      points: 420,
-                    ),
-                    const SizedBox(height: 30),
-                    _ProgressCard(
-                      progress: 0.6,
-                      title: 'Learning Progress',
-                      subTitle: 'Completed 60% of your goals',
-                    ),
-                    const SizedBox(height: 30),
-                    _SubscriptionCard(
-                      daysLeft: 20,
-                      onManagePressed: _showSubscriptionDialog,
-                    ),
-                    const SizedBox(height: 30),
-                    _ActionGrid(
-                      onLogout: _logout,
-                      onSubscription: _showSubscriptionDialog,
-                    ),
-                  ],
+  void _showFullScreenProfile() {
+    //Uses this function for when user click on the user profile
+    //then it show the full image
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(0),
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              color: Colors.black.withOpacity(0.8),
+              child: Center(
+                child: Hero(
+                  tag: 'profile-picture',
+                  child: Image.asset(
+                    'assets/images/angryp_cricle.png',
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
-            ]),
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-
-
-  //  code for the subscription plan
-
   void _showSubscriptionDialog() {
+    //It shows the subscription model
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isDark ? Colors.blue.shade200 : Colors.blue.shade600;
+    final accentColor = isDark ? Colors.blue.shade800 : Colors.blue.shade600;
 
     showDialog(
       context: context,
@@ -229,16 +141,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
               ),
+              elevation: 20,
+              insetPadding: const EdgeInsets.all(20),
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [Colors.blueGrey.shade900, Colors.grey.shade800]
-                        : [Colors.white, Colors.blue.shade50],
-                  ),
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: SingleChildScrollView(
@@ -259,14 +167,19 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         title: 'Basic',
                         price: '₹99',
                         duration: '1 Month',
-                        benefits: ['All Features', 'Unlimited Interviews', 'Priority Support', 'Practice Tests'],
+                        benefits: [
+                          'All Features',
+                          'Unlimited Interviews',
+                          'Priority Support',
+                          'Practice Tests'
+                        ],
                         isRecommended: false,
                         selectedPlan: _selectedPlan,
                         onSelect: (plan) {
                           setState(() {
                             _selectedPlan = plan;
                           });
-                          setStateDialog(() {}); // Update dialog state
+                          setStateDialog(() {});
                         },
                       ),
                       const SizedBox(height: 20),
@@ -275,7 +188,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         title: 'Pro',
                         price: '₹499',
                         duration: '6 Months',
-                        benefits: ['All Features', 'Unlimited Interviews', 'Priority Support', 'Practice Tests'],
+                        benefits: [
+                          'All Features',
+                          'Unlimited Interviews',
+                          'Priority Support',
+                          'Practice Tests'
+                        ],
                         isRecommended: true,
                         selectedPlan: _selectedPlan,
                         onSelect: (plan) {
@@ -291,7 +209,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         title: 'Enterprise',
                         price: '₹1499',
                         duration: '1 Year',
-                        benefits: ['All Pro Features', 'Team Access', 'Analytics Dashboard', '24/7 Support'],
+                        benefits: [
+                          'All Pro Features',
+                          'Team Access',
+                          'Analytics Dashboard',
+                          '24/7 Support'
+                        ],
                         isRecommended: false,
                         selectedPlan: _selectedPlan,
                         onSelect: (plan) {
@@ -321,272 +244,462 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
 
+  Widget _buildPlanCard(
+      BuildContext context, {
+        required String title,
+        required String price,
+        required String duration,
+        required List<String> benefits,
+        required bool isRecommended,
+        required String? selectedPlan,
+        required Function(String) onSelect,
+      }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark ? Colors.blueAccent.shade400 : Colors.blue.shade600;
+    final bool isSelected = title == selectedPlan;
 
-}
+    Color cardColor = isSelected
+        ? accentColor
+        : (isDark ? Colors.grey.shade900 : Colors.white);
 
+    Color textColor = isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge!.color!;
 
-Widget _buildPlanCard(
-    BuildContext context, {
-      required String title,
-      required String price,
-      required String duration,
-      required List<String> benefits,
-      required bool isRecommended,
-      required String? selectedPlan,
-      required Function(String) onSelect,
-    }) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-  final accentColor = isDark ? Colors.blue.shade200 : Colors.blue.shade600;
-  final bool isSelected = title == selectedPlan;
+    Color buttonColor = isSelected ? Colors.white : accentColor;
+    Color buttonTextColor = isSelected ? accentColor : Colors.white;
 
-  // Card color logic: Blue for selected card, default (white/grey) for others
-  Color cardColor = isSelected
-      ? accentColor  // Selected card color
-      : (isDark ? Colors.grey.shade800 : Colors.white);
-
-  // Text color for selected/unselected state
-  Color textColor = isSelected
-      ? Colors.white
-      : (isDark ? Colors.white : Colors.black87);
-
-  // Button color when selected/unselected
-  Color buttonColor = isSelected ? Colors.white : accentColor;
-  Color buttonTextColor = isSelected ? accentColor : Colors.white;
-
-
-
-
-  // Add the 'Popular Plan' text for the Pro plan
-
-  Widget? popularTag = (title == 'Pro' && isRecommended)
-      ? Positioned(
-    right: 8,
-    top: 8,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.green.shade300, Colors.green.shade700],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.shade200.withOpacity(0.5),
-            spreadRadius: 2,
-            blurRadius: 4,
-            offset: Offset(0, 2), // shadow position
-          ),
-        ],
-      ),
-      child: Text(
-        'Popular',
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 14,
-          letterSpacing: 1.2, // Slight letter spacing for elegance
-        ),
-      ),
-    ),
-  )
-      : null;
-  // Widget? popularTag = (title == 'Pro' && isRecommended)
-  //     ? Positioned(
-  //   right: -12,
-  //   top: -12,
-  //   child: Transform.rotate(
-  //     angle: 0.1,
-  //     child: Container(
-  //       padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-  //       decoration: BoxDecoration(
-  //         gradient: LinearGradient(
-  //           colors: [Colors.cyanAccent, Colors.purpleAccent],
-  //           stops: [0.1, 0.9],
-  //         ),
-  //         borderRadius: BorderRadius.circular(16),
-  //         boxShadow: [
-  //           BoxShadow(
-  //             color: Colors.purple.withOpacity(0.3),
-  //             spreadRadius: 8,
-  //             blurRadius: 16,
-  //             offset: Offset(0, 4),
-  //           ),
-  //         ],
-  //       ),
-  //       child: Row(
-  //         children: [
-  //           Icon(Icons.auto_awesome, size: 18, color: Colors.white),
-  //           SizedBox(width: 8),
-  //           Text(
-  //             'HOT DEAL',
-  //             style: GoogleFonts.poppins(
-  //               color: Colors.white,
-  //               fontWeight: FontWeight.w800,
-  //               fontSize: 14,
-  //               shadows: [
-  //                 Shadow(
-  //                   color: Colors.black.withOpacity(0.2),
-  //                   blurRadius: 4,
-  //                   offset: Offset(1, 1),
-  //                 )
-  //               ],
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   ),
-  // )
-  //     : null;
-
-
-
-
-
-
-
-
-  return Material(
-    borderRadius: BorderRadius.circular(16),
-    color: cardColor,
-    elevation: 4,
-    child: InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: () {
-        onSelect(title); // Select the plan and update the state
-      },
+    Widget? popularTag = (title == 'Pro' && isRecommended)
+        ? Positioned(
+      right: 8,
+      top: 8,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? accentColor : Colors.transparent,
-            width: 2,
+          gradient: LinearGradient(
+            colors: [Colors.green.shade300, Colors.green.shade700],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Text(
+          'Popular',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            letterSpacing: 1.2,
           ),
         ),
-        child: Stack(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                RichText(
-                  text: TextSpan(
+      ),
+    )
+        : null;
+
+    return Material(
+      borderRadius: BorderRadius.circular(16),
+      color: cardColor,
+      elevation: 4,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => onSelect(title),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected ? accentColor : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      TextSpan(
-                        text: price,
+                      Text(
+                        title,
                         style: TextStyle(
-                          fontSize: 28,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: textColor,
                         ),
                       ),
-                      TextSpan(
-                        text: ' $duration',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isSelected
-                              ? Colors.white.withOpacity(0.8)
-                              : Colors.grey.shade600,
-                        ),
-                      ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                ...benefits.map((benefit) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.check_circle,
-                        color: isSelected ? Colors.white : Colors.green,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          benefit,
+                  const SizedBox(height: 8),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: price,
                           style: TextStyle(
-                            color: isSelected
-                                ? Colors.white
-                                : (isDark ? Colors.white : Colors.black87),
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
                           ),
                         ),
-                      ),
-                    ],
+                        TextSpan(
+                          text: ' $duration',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isSelected
+                                ? Colors.white.withOpacity(0.8)
+                                : Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                )),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: buttonColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(
-                      isSelected ? 'Selected' : 'Choose Plan',
-                      style: TextStyle(
-                        color: buttonTextColor,
-                        fontWeight: FontWeight.bold,
+                  const SizedBox(height: 12),
+                  ...benefits.map((benefit) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          color: isSelected ? Colors.white : Colors.green,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            benefit,
+                            style: TextStyle(
+                              color: textColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: buttonColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        isSelected ? 'Selected' : 'Choose Plan',
+                        style: TextStyle(
+                          color: buttonTextColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            if (popularTag != null) popularTag, // Show 'Popular Plan' if it's Pro
-          ],
+                ],
+              ),
+              if (popularTag != null) popularTag,
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+
+
+  }
+
+  // In this Function We Handled the User Profile Update and User detail Updation
+  void _showEditProfileDialog() {
+    //It shows the EditProfile Dialog
+    final isDark = Theme
+        .of(context)
+        .brightness == Brightness.dark;
+    final accentColor = isDark ? Colors.white : Colors.black;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              elevation: 20,
+              insetPadding: const EdgeInsets.all(20),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Theme
+                      .of(context)
+                      .cardColor,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Edit Profile',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: accentColor,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      _buildPlanCard(
+                        context,
+                        title: 'Basic',
+                        price: '₹99',
+                        duration: '1 Month',
+                        benefits: [
+                          'All Features',
+                          'Unlimited Interviews',
+                          'Priority Support',
+                          'Practice Tests'
+                        ],
+                        isRecommended: false,
+                        selectedPlan: _selectedPlan,
+                        onSelect: (plan) {
+                          setState(() {
+                            _selectedPlan = plan;
+                          });
+                          setStateDialog(() {});
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      // Center(
+                      //   child: TextButton(
+                      //     onPressed: () => Navigator.pop(context),
+                      //     child:Text(
+                      //         "Later",
+                      //       textAlign: TextAlign.center,
+                      //       style: TextStyle(color:Colors.grey.shade900)
+                      //
+                      //     )
+                      //   )
+                      // ),
+                      Container(
+                        child: Center(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              'Not now',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.grey.shade900),
+                            ),
+                          ),
+                        ),
+
+                      ),
+
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
 
 
 
-
-
-
-
-
-
-class _UserInfoTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-
-  const _UserInfoTile({
-    required this.icon,
-    required this.title,
-    required this.value,
-  });
-
+  // Widget to handle the user profile image and username.
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Scaffold(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+        children: [
+          CustomScrollView(
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // App Bar with user profile
+              SliverAppBar(
+                expandedHeight: 200,
+                floating: false,
+                pinned: true,
+                flexibleSpace: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final top = constraints.biggest.height;
+                    final isCollapsed = top < 100;
+
+                    return FlexibleSpaceBar(
+                      collapseMode: CollapseMode.pin,
+                      background: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: isDark
+                                ? [
+                              Colors.blueGrey.shade900,
+                              Colors.blueGrey.shade900,
+                            ]
+                                : [
+                              Colors.blue.shade700,
+                              Colors.lightBlue.shade500,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+
+
+
+                        child: Align(
+                          alignment: const FractionalOffset(0.5, 2.0), // X=0.5 (center horizontally), Y=0.7 (downward)
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  GestureDetector(
+                                    onTap: _showFullScreenProfile,
+                                    child: Hero(
+                                      tag: 'profile-picture',
+                                      child: Container(
+                                        width: isCollapsed ? 60 : 120,
+                                        height: isCollapsed ? 60 : 120,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: Colors.white, width: 3),
+                                          image: const DecorationImage(
+                                            image: AssetImage('assets/images/angryp_cricle.png'),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  if (!isCollapsed)
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).primaryColor,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: Colors.white, width: 2),
+                                        ),
+                                        child: IconButton(
+                                          padding: EdgeInsets.zero,
+                                          icon: const Icon(Icons.edit, size: 16, color: Colors.white),
+                                          onPressed: () {},
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+
+                              if (!isCollapsed) const SizedBox(height: 12),
+
+                              if (!isCollapsed)
+                                Text(
+                                  _userName,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  textAlign: TextAlign.center,
+                                ),
+
+                              if (!isCollapsed) const SizedBox(height: 6),
+
+                              if (!isCollapsed)
+                                Text(
+                                  _userRole,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white.withOpacity(0.8),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  textAlign: TextAlign.center,
+                                ),
+                            ],
+                          ),
+                        ),
+
+
+
+
+                      ),
+                      title: isCollapsed
+                          ? Text(
+                        _userName,
+                        style: const TextStyle(
+                          color: Colors.blueAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                          : null,
+                      titlePadding: isCollapsed
+                          ? const EdgeInsetsDirectional.only(start: 16, bottom: 16)
+                          : EdgeInsets.zero,
+                    );
+                  },
+                ),
+              ),
+              // Content Section
+              SliverList(
+                delegate: SliverChildListDelegate([
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        // Tabbed content
+                        _buildTabBar(),
+                        const SizedBox(height: 20),
+                        // Content based on selected tab
+                        _buildTabContent(),
+                      ],
+                    ),
+                  ),
+                ]),
+              ),
+            ],
+          ),
+          // Confetti animation
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              shouldLoop: false,
+              colors: const [
+                Colors.green,
+                Colors.blue,
+                Colors.pink,
+                Colors.orange,
+                Colors.purple
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  Widget _buildTabBar() {
+
+
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -597,45 +710,335 @@ class _UserInfoTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.blue.shade400),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+          _TabButton(
+            icon: Icons.person,
+
+            text: 'Profile',
+            isSelected: _selectedTab == 0,
+            onTap: () => setState(() => _selectedTab = 0),
+          ),
+          _TabButton(
+            icon: Icons.analytics,
+            text: 'Stats',
+
+            isSelected: _selectedTab == 1,
+            onTap: () => setState(() => _selectedTab = 1),
+          ),
+          _TabButton(
+            icon: Icons.settings,
+            text: 'Settings',
+
+            isSelected: _selectedTab == 2,
+            onTap: () => setState(() => _selectedTab = 2),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildTabContent() {
+    return IndexedStack(
+      index: _selectedTab,
+      children: [
+        _buildProfileTab(),
+        _buildStatsTab(),
+        _buildSettingsTab(),
+      ],
+    );
+  }
+
+  Widget _buildProfileTab() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _UserInfoCard(email: _userEmail),
+          const SizedBox(height: 24),
+          _CustomProgressCard(
+            progress: 0.6,
+            title: 'Learning Progress',
+            subTitle: 'Completed 60% of your goals',
+            onCelebrate: _showAchievementCelebration,
+          ),
+          const SizedBox(height: 24),
+          _SubscriptionCard(
+            daysLeft: 20,
+            onManagePressed: _showSubscriptionDialog,
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsTab() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _StatsSection(
+            completed: 15,
+            ongoing: 3,
+            points: 420,
+          ),
+          const SizedBox(height: 24),
+          _WeeklyActivityChart(),
+          const SizedBox(height: 24),
+          _AchievementBadges(
+            onBadgeUnlocked: _showAchievementCelebration,
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  //in this Widget handle the setting tab  all actions  cards (eg...edit profile , setting , subscription,etc etc)
+  Widget _buildSettingsTab() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _ActionsGrid(
+            onLogout: _logout,
+            onSubscription: _showSubscriptionDialog,
+            onEditProfile: _showEditProfileDialog,
+          ),
+          const SizedBox(height: 24),
+          _AppSettings(),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+
 }
 
+// Tab Button Widget class
+class _TabButton extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool isSelected;
+  final VoidCallback onTap;
 
+  const _TabButton({
+    required this.icon,
+    required this.text,
+    required this.isSelected,
+    required this.onTap,
+  });
 
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Material(
+        color: isSelected
+            ? Theme.of(context).primaryColor.withOpacity(0.1)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected
+                  // ? Theme.of(context).primaryColorLight
+                      ? Colors.blue //: Colors.pink
+                      : Theme.of(context).textTheme.bodyLarge!.color,
+                  size: 20,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected
+                       // ? Theme.of(context).primaryColorLight
+                        ? Colors.blue
+                        : Theme.of(context).textTheme.bodyLarge!.color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
+// User Info Card Widget
+class _UserInfoCard extends StatelessWidget {
+  final String email;
 
+  const _UserInfoCard({required this.email});
 
-class _StatsGrid extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+              ),
+              child: Icon(Icons.email,
+                  color: Theme.of(context).primaryColor, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Email',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    email,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.content_copy,
+                  color: Theme.of(context).primaryColor),
+              onPressed: () {
+                // Copy to clipboard functionality
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Custom Progress Card Widget
+class _CustomProgressCard extends StatelessWidget {
+  final double progress;
+  final String title;
+  final String subTitle;
+  final VoidCallback onCelebrate;
+
+  const _CustomProgressCard({
+    required this.progress,
+    required this.title,
+    required this.subTitle,
+    required this.onCelebrate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.blue.shade400,
+              Colors.lightBlue.shade300,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.celebration, color: Colors.white),
+                    onPressed: onCelebrate,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                subTitle,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.9),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: CircularProgressIndicator(
+                        value: progress,
+                        backgroundColor: Colors.white.withOpacity(0.2),
+                        valueColor: const AlwaysStoppedAnimation(Colors.white),
+                        strokeWidth: 8,
+                      ),
+                    ),
+                    Text(
+                      "${(progress * 100).toInt()}%",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Stats Section Widget
+class _StatsSection extends StatelessWidget {
   final int completed;
   final int ongoing;
   final int points;
 
-  const _StatsGrid({
+  const _StatsSection({
     required this.completed,
     required this.ongoing,
     required this.points,
@@ -643,44 +1046,47 @@ class _StatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 3,
-      childAspectRatio: 0.8,
-      crossAxisSpacing: 15,
-      mainAxisSpacing: 15,
+    return Row(
       children: [
-        _StatItem(
-          value: completed,
-          label: 'Completed',
-          color: Colors.green,
-          icon: Icons.check_circle,
+        Expanded(
+          child: _StatTile(
+            value: completed,
+            label: 'Completed',
+            color: Colors.green,
+            icon: Icons.check_circle,
+          ),
         ),
-        _StatItem(
-          value: ongoing,
-          label: 'Ongoing',
-          color: Colors.orange,
-          icon: Icons.hourglass_top,
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StatTile(
+            value: ongoing,
+            label: 'Ongoing',
+            color: Colors.orange,
+            icon: Icons.hourglass_top,
+          ),
         ),
-        _StatItem(
-          value: points,
-          label: 'Points',
-          color: Colors.purple,
-          icon: Icons.star,
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StatTile(
+            value: points,
+            label: 'Points',
+            color: Colors.purple,
+            icon: Icons.star,
+          ),
         ),
       ],
     );
   }
 }
 
-class _StatItem extends StatelessWidget {
+// Stat Tile Widget
+class _StatTile extends StatelessWidget {
   final int value;
   final String label;
   final Color color;
   final IconData icon;
 
-  const _StatItem({
+  const _StatTile({
     required this.value,
     required this.label,
     required this.color,
@@ -689,120 +1095,286 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(15),
-      ), // Added missing comma here
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 20),
             ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value.toString(),
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
+            const SizedBox(height: 8),
+            Text(
+              value.toString(),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).textTheme.bodySmall?.color,
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
-
   }
 }
 
-class _ProgressCard extends StatelessWidget {
-  final double progress;
-  final String title;
-  final String subTitle;
+// Weekly Activity Chart Widget
+class _WeeklyActivityChart extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final data = [
+      {'label': 'Mon', 'value': 8},
+      {'label': 'Tue', 'value': 12},
+      {'label': 'Wed', 'value': 6},
+      {'label': 'Thu', 'value': 10},
+      {'label': 'Fri', 'value': 14},
+      {'label': 'Sat', 'value': 8},
+      {'label': 'Sun', 'value': 4},
+    ];
+    final maxValue = data.map((e) => e['value'] as int).reduce((a, b) => a > b ? a : b);
 
-  const _ProgressCard({
-    required this.progress,
-    required this.title,
-    required this.subTitle,
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Weekly Activity',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 150, // max height of chart area (can be changed or made flexible)
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: data.map((entry) {
+                  final value = entry['value'] as int;
+                  final label = entry['label'] as String;
+                  return _ChartBar(
+                    label: label,
+                    value: value,
+                    heightFactor: value / maxValue,
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+// Chart Bar Widget
+class _ChartBar extends StatelessWidget {
+  final String label;
+  final int value;
+  final double heightFactor; // 0..1
+
+  const _ChartBar({
+    required this.label,
+    required this.value,
+    required this.heightFactor,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.blue.shade400,
-            Colors.lightBlue.shade300,
+    return LayoutBuilder(
+      builder: (ctx, constraints) {
+        final maxBarHeight = constraints.maxHeight * 0.6; // reserve 60% height for bar
+        final barHeight = maxBarHeight * heightFactor;
+
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              value.toString(),
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: 20,
+              height: barHeight,
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(4),
+                  topRight: Radius.circular(4),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black,
+              ),
+            ),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+        );
+      },
+    );
+  }
+}
+
+
+// Achievement Badges Widget
+class _AchievementBadges extends StatelessWidget {
+  final VoidCallback onBadgeUnlocked;
+
+  const _AchievementBadges({required this.onBadgeUnlocked});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subTitle,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white.withOpacity(0.9),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Stack(
-            children: [
-              Container(
-                height: 10,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(5),
-                ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Achievements',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge!.color,
               ),
-              LayoutBuilder(
-                builder: (context, constraints) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 500),
-                  width: constraints.maxWidth * progress,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _AchievementBadge(
+                  icon: Icons.star,
+                  title: 'Beginner',
+                  achieved: true,
+                  onTap: onBadgeUnlocked,
                 ),
-              ),
-            ],
-          ),
-        ],
+                _AchievementBadge(
+                  icon: Icons.auto_awesome,
+                  title: 'Intermediate',
+                  achieved: true,
+                  onTap: onBadgeUnlocked,
+                ),
+                _AchievementBadge(
+                  icon: Icons.workspace_premium,
+                  title: 'Expert',
+                  achieved: false,
+                  onTap: onBadgeUnlocked,
+                ),
+                _AchievementBadge(
+                  icon: Icons.emoji_events,
+                  title: 'Master',
+                  achieved: false,
+                  onTap: onBadgeUnlocked,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
+// Achievement Badge Widget
+class _AchievementBadge extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final bool achieved;
+  final VoidCallback onTap;
+
+  const _AchievementBadge({
+    required this.icon,
+    required this.title,
+    required this.achieved,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: achieved
+                  ? Theme.of(context).primaryColor
+                  : Colors.grey.shade300,
+              boxShadow: achieved
+                  ? [
+                BoxShadow(
+                  color: Theme.of(context).primaryColor.withOpacity(0.5),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                )
+              ]
+                  : null,
+            ),
+            child: Icon(
+              icon,
+              color: achieved ? Colors.white : Colors.grey.shade600,
+              size: 30,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).textTheme.bodySmall!.color,
+          ),
+        ),
+      ],
+    );
+  }
+
+
+}
+
+// Subscription Card Widget
 class _SubscriptionCard extends StatelessWidget {
   final int daysLeft;
   final VoidCallback onManagePressed;
@@ -814,69 +1386,136 @@ class _SubscriptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.orange.shade100,
-              shape: BoxShape.circle,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.orange.shade100,
+              ),
+              child: const Icon(Icons.workspace_premium, color: Colors.orange),
             ),
-            child: const Icon(Icons.workspace_premium, color: Colors.orange),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Premium Plan',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Premium Plan',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Expires in $daysLeft days',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
+                  const SizedBox(height: 4),
+                  Text(
+                    'Expires in $daysLeft days',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.arrow_forward),
-            onPressed: onManagePressed,
-          ),
-        ],
+            IconButton(
+              icon: const Icon(Icons.arrow_forward),
+              onPressed: onManagePressed,
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ActionGrid extends StatelessWidget {
+// App Settings Widget
+class _AppSettings extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _SettingsItem(
+              icon: Icons.notifications,
+              title: 'Notifications',
+              trailing: Switch(value: true, onChanged: (value) {}),
+            ),
+            const Divider(),
+            _SettingsItem(
+              icon: Icons.dark_mode,
+              title: 'Dark Mode',
+              trailing: Switch(value: false, onChanged: (value) {}),
+            ),
+            const Divider(),
+            _SettingsItem(
+              icon: Icons.security,
+              title: 'Privacy & Security',
+              trailing: const Icon(Icons.arrow_forward),
+            ),
+            const Divider(),
+            _SettingsItem(
+              icon: Icons.help,
+              title: 'Help & Support',
+              trailing: const Icon(Icons.arrow_forward),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Settings Item Widget
+class _SettingsItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Widget trailing;
+
+  const _SettingsItem({
+    required this.icon,
+    required this.title,
+    required this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: Theme.of(context).primaryColor),
+      title: Text(title),
+      trailing: trailing,
+      onTap: () {},
+    );
+  }
+
+
+}
+
+// Actions Grid Widget ( when user clicks on the the card(action buttons) eg. Edit profile, Setting,Subscription....)
+class _ActionsGrid extends StatelessWidget {
   final VoidCallback onLogout;
   final VoidCallback onSubscription;
+  final VoidCallback onEditProfile;
 
-  const _ActionGrid({
+  const _ActionsGrid({
     required this.onLogout,
     required this.onSubscription,
+    required this.onEditProfile
   });
 
   @override
@@ -885,56 +1524,57 @@ class _ActionGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
-      childAspectRatio: 2.5,
+      childAspectRatio: 1.5,
       crossAxisSpacing: 15,
       mainAxisSpacing: 15,
       children: [
         _ActionButton(
           icon: Icons.edit,
           label: 'Edit Profile',
-          // color: Colors.blue,
-          color:Color(0xFF780C28),
-          onTap: () {},
+          color: const Color(0xFF780C28),
+          onTap: onEditProfile,
         ),
         _ActionButton(
           icon: Icons.settings,
           label: 'Settings',
-          // color: Colors.grey,
-          color:Color(0xFF000957),
+          color: const Color(0xFF000957),
           onTap: () {},
         ),
         _ActionButton(
           icon: Icons.credit_card,
           label: 'Subscription',
-          // color: Colors.purple,
-          color:Color(0xFF059212),
+          color: const Color(0xFF059212),
           onTap: onSubscription,
         ),
         _ActionButton(
           icon: Icons.logout,
           label: 'Log Out',
-          // color: Colors.red,
-          color:Color(0xFFFF1700),
+          color: const Color(0xFFFF1700),
           onTap: onLogout,
         ),
         _ActionButton(
           icon: Icons.person,
           label: 'About Us',
-          // color: Colors.deepOrange,
-          color: Color(0xFF8E05C2),
-          // onTap: () {},
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AboutUsScreen()),
-              );
-            }
+          color: const Color(0xFF8E05C2),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AboutUsScreen()),
+            );
+          },
+        ),
+        _ActionButton(
+          icon: Icons.share,
+          label: 'Share App',
+          color: const Color(0xFF0466C8),
+          onTap: () {},
         ),
       ],
     );
   }
 }
 
+// Action Button Widget
 class _ActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -950,24 +1590,28 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      borderRadius: BorderRadius.circular(12),
-      color: color.withOpacity(0.1),
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
+          padding: const EdgeInsets.all(16),
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color),
-              const SizedBox(width: 8),
+              Icon(icon, color: color, size: 24),
+              const SizedBox(height: 8),
               Text(
                 label,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   color: color,
                   fontWeight: FontWeight.w500,
+                  fontSize: 12,
                 ),
               ),
             ],
@@ -979,8 +1623,7 @@ class _ActionButton extends StatelessWidget {
 }
 
 
-//About us Screen Section
-
+// About Us Screen
 class AboutUsScreen extends StatelessWidget {
   const AboutUsScreen({super.key});
 
@@ -1017,7 +1660,8 @@ class AboutUsScreen extends StatelessWidget {
                 role: 'UI Designer ',
                 image: 'assets/images/pooja.jpeg',
                 color: Colors.pink,
-                info: 'Pixel Perfectionist\nCreative Visionary\nUI/UX Alchemist\n - realeye',
+                info:
+                'Pixel Perfectionist\nCreative Visionary\nUI/UX Alchemist\n - realeye',
                 quote: '"Design is intelligence made visible"',
               ),
               _buildTeamMemberCard(
@@ -1026,7 +1670,8 @@ class AboutUsScreen extends StatelessWidget {
                 role: 'QA Analyst ',
                 image: 'assets/images/vikas.jpg',
                 color: Colors.blueAccent,
-                info: 'Bug Hunter Extraordinaire\nQuality Guardian\nTesting Maestro\n - realeye',
+                info:
+                'Bug Hunter Extraordinaire\nQuality Guardian\nTesting Maestro\n - realeye',
                 quote: '"Quality is not an act, it\'s a habit"',
               ),
               _buildTeamMemberCard(
@@ -1035,8 +1680,6 @@ class AboutUsScreen extends StatelessWidget {
                 role: 'Backend Developer',
                 image: 'assets/images/raviraj.jpg',
                 color: Colors.purple,
-                // color: Theme.of(context).colorScheme.onSurface, // Adaptive color
-              // Specific role color
                 info: 'Code Architect\nServer Wizard\nDatabase\n - realeye',
                 quote: '"First solve the problem, then write the code"',
               ),
@@ -1055,89 +1698,86 @@ class AboutUsScreen extends StatelessWidget {
         required Color color,
         required String info,
         required String quote,
-        Color? roleColor
       }) {
     return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [color.withOpacity(0.2), color.withOpacity(0.4)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.1),
-            blurRadius: 20,
-            spreadRadius: 5,
-          )
-        ],
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundImage: AssetImage(image),
-                  backgroundColor: Colors.white,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(2, 2),
-                      )
-                    ],
-                  ),
-                ),
-                Text(
-                  role,
-                  style: TextStyle(
-                    fontSize: 18,
-                    // color: color.withOpacity(0.8),
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Divider(color: color.withOpacity(0.3)),
-                const SizedBox(height: 16),
-                Text(
-                  info,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  quote,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: color,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-            ),
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            colors: [color.withOpacity(0.2), color.withOpacity(0.4)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
-      ),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 20,
+              spreadRadius: 5,
+            )
+          ],
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundImage: AssetImage(image),
+                    backgroundColor: Colors.white,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(2, 2),
+                        )
+                      ],
+                    ),
+                  ),
+                  Text(
+                    role,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(color: color.withOpacity(0.3)),
+                  const SizedBox(height: 16),
+                  Text(
+                    info,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    quote,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: color,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        )
     );
   }
 }
-

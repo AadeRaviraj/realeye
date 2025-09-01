@@ -23,17 +23,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
+    // This function runs once when the widget is created.
+    // We use it to initialize data or start tasks, like fetching user data.
     super.initState();
     _fetchUserData();
   }
 
+
   @override
   void dispose() {
+    // This function runs when the widget is removed from the screen.
+    // We use it to clean up resources like controllers to avoid memory leaks.
     _scrollController.dispose();
     super.dispose();
   }
 
+
   void _fetchUserData() async {
+    // function is used for fetch the user name from the firebase
     User? user = _auth.currentUser;
     if (user != null) {
       DataSnapshot snapshot = await _database.child("users").child(user.uid).get();
@@ -45,7 +52,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+
   void _logout() async {
+    // function is not used anywhere in this screen but future thinking uses
     await _auth.signOut();
     Navigator.pushReplacement(
       context,
@@ -53,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // function is used for changing teh screen inside teh scafffold using index value
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -60,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // used future  class for implement the database(firebase fetch) handle
   Future<bool> _onWillPop() async {
     if (_showFaceDetection) {
       setState(() {
@@ -68,6 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       return false;
     }
+    // if you try to logout then it will by wait the screen
     return await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -88,6 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
         false;
   }
 
+  //main ui build here by using build calss
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -146,135 +159,11 @@ class _HomeScreenState extends State<HomeScreen> {
         bottomNavigationBar: _buildBottomNavigationBar(isDarkMode),
       ),
     );
+
+
   }
 
-  Widget _buildBottomNavigationBar(bool isDarkMode) {
-    return AnimatedContainer(
-      duration: Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      decoration: BoxDecoration(
-        color: isDarkMode ? Colors.black : Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30.0),
-          topRight: Radius.circular(30.0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black45,
-            offset: Offset(0, -3),
-            blurRadius: 6,
-          ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.transparent,
-        selectedItemColor: isDarkMode ? Colors.blueAccent : Colors.orangeAccent,
-        unselectedItemColor: isDarkMode ? Colors.white70 : Colors.black54,
-        elevation: 0,
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Study'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Interview Prep'),
-          BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Profile'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWelcomeHeader() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        bool isWide = constraints.maxWidth > 600;
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment:
-          isWide ? MainAxisAlignment.start : MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 25,
-              backgroundImage: AssetImage('assets/images/angryp_cricle.png'),
-            ),
-            SizedBox(width: 12),
-            Column(
-              crossAxisAlignment:
-              isWide ? CrossAxisAlignment.start : CrossAxisAlignment.center,
-              children: [
-                Text(
-                  "Hello, $_username 👋",
-                  style: TextStyle(
-                    fontSize: isWide ? 28 : 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  "Ready to prepare for your next interview?",
-                  style: TextStyle(fontSize: isWide ? 18 : 14),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildMotivationalQuote() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.format_quote, color: Colors.green),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              '"$motivationalQuote"',
-              style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActions() {
-    List<Map<String, dynamic>> actions = [
-      {"icon": Icons.description, "label": "Resume Review"},
-      {"icon": Icons.mic, "label": "Mock Interview"},
-      {"icon": Icons.menu_book, "label": "Daily Quiz"},
-      {"icon": Icons.track_changes, "label": "Goal Tracker"},
-    ];
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        bool isWide = constraints.maxWidth > 600;
-        return GridView.count(
-          shrinkWrap: true,
-          crossAxisCount: isWide ? 6 : 2,
-          physics: NeverScrollableScrollPhysics(),
-          children: actions.map((a) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircleAvatar(
-                  radius: 25,
-                  child: Icon(a['icon'], size: 28),
-                ),
-                SizedBox(height: 6),
-                Text(a['label']),
-              ],
-            );
-          }).toList(),
-        );
-      },
-    );
-  }
-
+  //Entry point of all widgets
   Widget _buildMainScreen() {
     return CustomScrollView(
       controller: _scrollController,
@@ -287,8 +176,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-              //  _buildWelcomeHeader(),
-                SizedBox(height: 20),
                 _buildMotivationalQuote(),
                 SizedBox(height: 20),
                 _buildProgressTracker(),
@@ -304,6 +191,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
 
+        //Silver Box adapter , for create teh web and mobile base ui design ...
+        //design the Card here
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -397,7 +286,145 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildBottomNavigationBar(bool isDarkMode) {
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      decoration: BoxDecoration(
+        color: isDarkMode ? Colors.black : Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(30.0),
+          topRight: Radius.circular(30.0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black45,
+            offset: Offset(0, -3),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.transparent,
+        selectedItemColor: isDarkMode ? Colors.blueAccent : Colors.orangeAccent,
+        unselectedItemColor: isDarkMode ? Colors.white70 : Colors.black54,
+        elevation: 0,
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Study'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Interview Prep'),
+          BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Profile'),
+        ],
+      ),
+    );
+  }
 
+
+  Widget _buildMotivationalQuote() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.format_quote, color: Colors.green),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '"$motivationalQuote"',
+              style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+
+  Widget _buildQuickActions() {
+    final List<Map<String, dynamic>> actions = [
+      {
+        "icon": Icons.description,
+        "label": "Resume Review",
+        "color": const Color(0xFF2DD4BF) // Teal
+      },
+      {
+        "icon": Icons.mic,
+        "label": "Mock Interview",
+        "color": const Color(0xFF8B5CF6) // Violet
+      },
+      {
+        "icon": Icons.menu_book,
+        "label": "Daily Quiz",
+        "color": const Color(0xFF4F46E5) // Indigo
+      },
+      {
+        "icon": Icons.track_changes,
+        "label": "Goal Tracker",
+        "color": const Color(0xFFFB7185) // Pink
+      },
+      {
+        "icon": Icons.psychology,
+        "label": "AI Coach",
+        "color": const Color(0xFF10B981) // Emerald
+      },
+      {
+        "icon": Icons.music_note,
+        "label": "Mood Music",
+        "color": const Color(0xFFF43F5E) // Rose
+      },
+      {
+        "icon": Icons.school,
+        "label": "Study Hub",
+        "color": const Color(0xFF6366F1) // Indigo lighter
+      },
+      {
+        "icon": Icons.people,
+        "label": "Community",
+        "color": const Color(0xFFF97316) // Orange
+      },
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.2,
+      ),
+      itemCount: actions.length,
+      itemBuilder: (context, index) {
+        final a = actions[index];
+        return _ActionCard(
+          icon: a['icon'],
+          label: a['label'],
+          color: a['color'],
+          onTap: () {
+            // TODO: Add navigation later
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("${a['label']} clicked"),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+
+
+//Silver App bar to implement teh userprofile screen
   SliverAppBar _buildCustomSliverAppBar() {
     return SliverAppBar(
       expandedHeight: 200.0,
@@ -490,7 +517,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 SizedBox(height: 10),
                 Text(
-                  "Hello, $_username 👋",
+                  "Hello, $_username....!",
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -504,10 +531,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-
-
-
 
   Widget _buildProgressTracker() {
     double progress = 0.6;
@@ -643,8 +666,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
 }
 
+//Collapsing App bar  code and classes implemented here  without created new file
 class _CollapsingProfileImage extends StatefulWidget {
   final ScrollController scrollController;
   final ImageProvider image;
@@ -765,3 +790,602 @@ class __CollapsingTitleBuilderState extends State<_CollapsingTitleBuilder> {
     );
   }
 }
+
+
+
+
+
+class _ActionCard extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ActionCard({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  __ActionCardState createState() => __ActionCardState();
+}
+
+class __ActionCardState extends State<_ActionCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOut,
+      ),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeIn,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(TapDownDetails details) {
+    _animationController.forward();
+  }
+
+  void _onTapUp(TapUpDetails details) {
+    _animationController.reverse();
+    widget.onTap();
+  }
+
+  void _onTapCancel() {
+    _animationController.reverse();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color cardColor = isDark ? Colors.grey[850]! : Colors.white;
+    final Color textColor = isDark ? Colors.white : Colors.grey[800]!;
+
+    return GestureDetector(
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: _onTapCancel,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Container(
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(20),
+            border: isDark ? Border.all(color: Colors.white, width: 1) : Border.all(color: Colors.black38, width: 1),
+            boxShadow: isDark
+                ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ]
+                : [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              // Background gradient circle
+              Positioned(
+                top: -20,
+                right: -20,
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          widget.color.withOpacity(isDark ? 0.3 : 0.2),
+                          widget.color.withOpacity(isDark ? 0.1 : 0.05),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Content
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Icon with subtle background
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: widget.color.withOpacity(isDark ? 0.2 : 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        widget.icon,
+                        size: 24,
+                        color: widget.color,
+                      ),
+                    ),
+
+                    // Label text
+                    Text(
+                      widget.label,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/*
+
+different design for build quick cards
+  // Widget _buildQuickActions() {
+  //   List<Map<String, dynamic>> actions = [
+  //     {"icon": Icons.description, "label": "Resume Review"},
+  //     {"icon": Icons.mic, "label": "Mock Interview"},
+  //     {"icon": Icons.menu_book, "label": "Daily Quiz"},
+  //     {"icon": Icons.track_changes, "label": "Goal Tracker"},
+  //   ];
+  //   return LayoutBuilder(
+  //     builder: (context, constraints) {
+  //       bool isWide = constraints.maxWidth > 600;
+  //       return GridView.count(
+  //         shrinkWrap: true,
+  //         crossAxisCount: isWide ? 6 : 2,
+  //         physics: NeverScrollableScrollPhysics(),
+  //         children: actions.map((a) {
+  //           return Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               CircleAvatar(
+  //                 radius: 25,
+  //                 child: Icon(a['icon'], size: 28),
+  //               ),
+  //               SizedBox(height: 6),
+  //               Text(a['label']),
+  //             ],
+  //           );
+  //         }).toList(),
+  //       );
+  //     },
+  //   );
+  // }
+
+
+  // Widget _buildQuickActions() {
+  //   // List of important actions shown to user
+  //   // We can easily add/remove items here in future
+  //   final List<Map<String, dynamic>> actions = [
+  //     {"icon": Icons.description, "label": "Resume Review"},
+  //     {"icon": Icons.mic, "label": "Mock Interview"},
+  //     {"icon": Icons.menu_book, "label": "Daily Quiz"},
+  //     {"icon": Icons.track_changes, "label": "Goal Tracker"},
+  //     {"icon": Icons.psychology, "label": "AI Coach"}, // future feature
+  //     {"icon": Icons.music_note, "label": "Mood Music"}, // future feature
+  //     {"icon": Icons.school, "label": "Study Hub"}, // future feature
+  //     {"icon": Icons.people, "label": "Community"}, // future feature
+  //   ];
+  //
+  //   return LayoutBuilder(
+  //     builder: (context, constraints) {
+  //       bool isWide = constraints.maxWidth > 600;
+  //
+  //       return GridView.count(
+  //         shrinkWrap: true,
+  //         crossAxisCount: isWide ? 4 : 2, // responsive columns
+  //         mainAxisSpacing: 16,
+  //         crossAxisSpacing: 16,
+  //         physics: const NeverScrollableScrollPhysics(),
+  //         children: actions.map((a) {
+  //           return GestureDetector(
+  //             onTap: () {
+  //               // TODO: Replace with real navigation later
+  //               ScaffoldMessenger.of(context).showSnackBar(
+  //                 SnackBar(content: Text("${a['label']} clicked")),
+  //               );
+  //             },
+  //             child: Container(
+  //               decoration: BoxDecoration(
+  //                 borderRadius: BorderRadius.circular(20),
+  //                 gradient: LinearGradient(
+  //                   colors: [Colors.blue.shade400, Colors.blue.shade700],
+  //                   begin: Alignment.topLeft,
+  //                   end: Alignment.bottomRight,
+  //                 ),
+  //                 boxShadow: [
+  //                   BoxShadow(
+  //                     color: Colors.black26,
+  //                     blurRadius: 8,
+  //                     offset: const Offset(2, 4),
+  //                   ),
+  //                 ],
+  //               ),
+  //               child: Column(
+  //                 mainAxisAlignment: MainAxisAlignment.center,
+  //                 children: [
+  //                   CircleAvatar(
+  //                     radius: 28,
+  //                     backgroundColor: Colors.white.withOpacity(0.2),
+  //                     child: Icon(
+  //                       a['icon'],
+  //                       size: 30,
+  //                       color: Colors.white,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 10),
+  //                   Text(
+  //                     a['label'],
+  //                     textAlign: TextAlign.center,
+  //                     style: const TextStyle(
+  //                       color: Colors.white,
+  //                       fontWeight: FontWeight.w600,
+  //                       fontSize: 14,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           );
+  //         }).toList(),
+  //       );
+  //     },
+  //   );
+  // }
+
+//colorful carda
+//   Widget _buildQuickActions() {
+//     // Each action has its own professional color
+//     final List<Map<String, dynamic>> actions = [
+//       {
+//         "icon": Icons.description,
+//         "label": "Resume Review",
+//         "color": [Colors.teal, Colors.tealAccent]
+//       },
+//       {
+//         "icon": Icons.mic,
+//         "label": "Mock Interview",
+//         "color": [Colors.deepPurple, Colors.purpleAccent]
+//       },
+//       {
+//         "icon": Icons.menu_book,
+//         "label": "Daily Quiz",
+//         "color": [Colors.indigo, Colors.blueAccent]
+//       },
+//       {
+//         "icon": Icons.track_changes,
+//         "label": "Goal Tracker",
+//         "color": [Colors.orange, Colors.deepOrangeAccent]
+//       },
+//       {
+//         "icon": Icons.psychology,
+//         "label": "AI Coach",
+//         "color": [Colors.green, Colors.lightGreenAccent]
+//       },
+//       {
+//         "icon": Icons.music_note,
+//         "label": "Mood Music",
+//         "color": [Colors.pink, Colors.pinkAccent]
+//       },
+//       {
+//         "icon": Icons.school,
+//         "label": "Study Hub",
+//         "color": [Colors.blueGrey, Colors.grey]
+//       },
+//       {
+//         "icon": Icons.people,
+//         "label": "Community",
+//         "color": [Colors.red, Colors.redAccent]
+//       },
+//     ];
+//
+//     return LayoutBuilder(
+//       builder: (context, constraints) {
+//         bool isWide = constraints.maxWidth > 600;
+//
+//         return GridView.count(
+//           shrinkWrap: true,
+//           crossAxisCount: isWide ? 4 : 2, // Responsive columns
+//           mainAxisSpacing: 16,
+//           crossAxisSpacing: 16,
+//           physics: const NeverScrollableScrollPhysics(),
+//           children: actions.map((a) {
+//             return GestureDetector(
+//               onTap: () {
+//                 // TODO: Replace with real navigation
+//                 ScaffoldMessenger.of(context).showSnackBar(
+//                   SnackBar(content: Text("${a['label']} clicked")),
+//                 );
+//               },
+//               child: Container(
+//                 decoration: BoxDecoration(
+//                   borderRadius: BorderRadius.circular(20),
+//                   gradient: LinearGradient(
+//                     colors: a['color'], // Different color for each card
+//                     begin: Alignment.topLeft,
+//                     end: Alignment.bottomRight,
+//                   ),
+//                   boxShadow: [
+//                     BoxShadow(
+//                       color: Colors.black26,
+//                       blurRadius: 6,
+//                       offset: const Offset(2, 3),
+//                     ),
+//                   ],
+//                 ),
+//                 child: Column(
+//                   mainAxisAlignment: MainAxisAlignment.center,
+//                   children: [
+//                     CircleAvatar(
+//                       radius: 26,
+//                       backgroundColor: Colors.white.withOpacity(0.2),
+//                       child: Icon(
+//                         a['icon'],
+//                         size: 28,
+//                         color: Colors.white,
+//                       ),
+//                     ),
+//                     const SizedBox(height: 10),
+//                     Text(
+//                       a['label'],
+//                       textAlign: TextAlign.center,
+//                       style: const TextStyle(
+//                         color: Colors.white,
+//                         fontWeight: FontWeight.w600,
+//                         fontSize: 14,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             );
+//           }).toList(),
+//         );
+//       },
+//     );
+//   }
+
+//only black and white
+//   Widget _buildQuickActions() {
+//     // Defining quick action items
+//     final List<Map<String, dynamic>> actions = [
+//       {"icon": Icons.description, "label": "Resume Review"},
+//       {"icon": Icons.mic, "label": "Mock Interview"},
+//       {"icon": Icons.menu_book, "label": "Daily Quiz"},
+//       {"icon": Icons.track_changes, "label": "Goal Tracker"},
+//       {"icon": Icons.psychology, "label": "AI Coach"}, // future
+//       {"icon": Icons.music_note, "label": "Mood Music"}, // future
+//       {"icon": Icons.school, "label": "Study Hub"}, // future
+//       {"icon": Icons.people, "label": "Community"}, // future
+//     ];
+//
+//     return ListView.separated(
+//       shrinkWrap: true,
+//       physics: const NeverScrollableScrollPhysics(),
+//       itemCount: actions.length,
+//       separatorBuilder: (_, __) => const SizedBox(height: 12),
+//       itemBuilder: (context, index) {
+//         final a = actions[index];
+//         return GestureDetector(
+//           onTap: () {
+//             // TODO: Add navigation
+//             ScaffoldMessenger.of(context).showSnackBar(
+//               SnackBar(content: Text("${a['label']} clicked")),
+//             );
+//           },
+//           child: Container(
+//             padding: const EdgeInsets.all(16),
+//             decoration: BoxDecoration(
+//               color: Colors.white, // clean background
+//               borderRadius: BorderRadius.circular(16),
+//               boxShadow: [
+//                 BoxShadow(
+//                   color: Colors.black.withOpacity(0.1),
+//                   blurRadius: 8,
+//                   offset: const Offset(2, 4),
+//                 ),
+//               ],
+//             ),
+//             child: Row(
+//               children: [
+//                 // Icon container with black circular background
+//                 Container(
+//                   padding: const EdgeInsets.all(12),
+//                   decoration: BoxDecoration(
+//                     shape: BoxShape.circle,
+//                     color: Colors.black,
+//                   ),
+//                   child: Icon(
+//                     a['icon'],
+//                     size: 28,
+//                     color: Colors.white,
+//                   ),
+//                 ),
+//                 const SizedBox(width: 16),
+//                 // Text Section
+//                 Expanded(
+//                   child: Text(
+//                     a['label'],
+//                     style: const TextStyle(
+//                       fontSize: 16,
+//                       fontWeight: FontWeight.w600,
+//                       color: Colors.black,
+//                     ),
+//                   ),
+//                 ),
+//                 // Small forward arrow → feels like "next screen"
+//                 const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.black54),
+//               ],
+//             ),
+//           ),
+//         );
+//       },
+//     );
+//   }
+
+  //
+  // Widget _buildQuickActions() {
+  //   // List of actions with their custom colors
+  //   final List<Map<String, dynamic>> actions = [
+  //     {
+  //       "icon": Icons.description,
+  //       "label": "Resume Review",
+  //       "color": Colors.teal
+  //     },
+  //     {
+  //       "icon": Icons.mic,
+  //       "label": "Mock Interview",
+  //       "color": Colors.deepPurple
+  //     },
+  //     {
+  //       "icon": Icons.menu_book,
+  //       "label": "Daily Quiz",
+  //       "color": Colors.indigo
+  //     },
+  //     {
+  //       "icon": Icons.track_changes,
+  //       "label": "Goal Tracker",
+  //       "color": Colors.orange
+  //     },
+  //     {
+  //       "icon": Icons.psychology,
+  //       "label": "AI Coach",
+  //       "color": Colors.green
+  //     },
+  //     {
+  //       "icon": Icons.music_note,
+  //       "label": "Mood Music",
+  //       "color": Colors.pink
+  //     },
+  //     {
+  //       "icon": Icons.school,
+  //       "label": "Study Hub",
+  //       "color": Colors.blueGrey
+  //     },
+  //     {
+  //       "icon": Icons.people,
+  //       "label": "Community",
+  //       "color": Colors.red
+  //     },
+  //   ];
+  //
+  //   return ListView.separated(
+  //     shrinkWrap: true,
+  //     physics: const NeverScrollableScrollPhysics(),
+  //     itemCount: actions.length,
+  //     separatorBuilder: (_, __) => const SizedBox(height: 14),
+  //     itemBuilder: (context, index) {
+  //       final a = actions[index];
+  //       return GestureDetector(
+  //         onTap: () {
+  //           // TODO: Add navigation later
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             SnackBar(content: Text("${a['label']} clicked")),
+  //           );
+  //         },
+  //         child: Container(
+  //           padding: const EdgeInsets.all(16),
+  //           decoration: BoxDecoration(
+  //             borderRadius: BorderRadius.circular(18),
+  //             gradient: LinearGradient(
+  //               colors: [
+  //                 (a['color'] as Color).withOpacity(0.8),
+  //                 (a['color'] as Color).withOpacity(0.5),
+  //               ],
+  //               begin: Alignment.topLeft,
+  //               end: Alignment.bottomRight,
+  //             ),
+  //             boxShadow: [
+  //               BoxShadow(
+  //                 color: (a['color'] as Color).withOpacity(0.3),
+  //                 blurRadius: 10,
+  //                 offset: const Offset(2, 6),
+  //               ),
+  //             ],
+  //           ),
+  //           child: Row(
+  //             children: [
+  //               // Icon with background glow
+  //               Container(
+  //                 padding: const EdgeInsets.all(14),
+  //                 decoration: BoxDecoration(
+  //                   shape: BoxShape.circle,
+  //                   color: Colors.white.withOpacity(0.25),
+  //                 ),
+  //                 child: Icon(
+  //                   a['icon'],
+  //                   size: 28,
+  //                   color: Colors.white,
+  //                 ),
+  //               ),
+  //               const SizedBox(width: 16),
+  //               // Title text
+  //               Expanded(
+  //                 child: Text(
+  //                   a['label'],
+  //                   style: const TextStyle(
+  //                     fontSize: 16,
+  //                     fontWeight: FontWeight.w700,
+  //                     color: Colors.white,
+  //                   ),
+  //                 ),
+  //               ),
+  //               // Subtle action arrow
+  //               const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.white70),
+  //             ],
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+  //
+
+ */
