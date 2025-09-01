@@ -37,6 +37,7 @@ dependencies:
   cloud_firestore: 5.4.0
   firebase_database: 11.2.0
   animated_text_kit: ^4.2.3
+  image_picker: ^1.1.0
 
 
 
