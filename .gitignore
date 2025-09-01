@@ -30,6 +30,8 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+realeye_backend/.env
+
 
 # Symbolication related
 app.*.symbols
