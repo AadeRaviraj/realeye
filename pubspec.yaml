@@ -36,6 +36,12 @@ dependencies:
   firebase_auth: 5.4.0
   cloud_firestore: 5.4.0
   firebase_database: 11.2.0
+  animated_text_kit: ^4.2.3
+
+
+
+  confetti: ^0.7.0
+
 
 
 
@@ -44,7 +50,9 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
   flutter_launcher_icons: ^0.13.1
+
 
 #ste the App icon
 flutter_launcher_icons:
@@ -66,14 +74,11 @@ flutter_launcher_icons:
 
 # The following section is specific to Flutter packages.
 flutter:
-
-
-
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
 
 
   assets:
