@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'signin_screen.dart';
+import 'dart:io'; // For File
+import 'package:image_picker/image_picker.dart';// For picking images
 import 'package:confetti/confetti.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -405,18 +407,173 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   // In this Function We Handled the User Profile Update and User detail Updation
+  // void _showEditProfileDialog() {
+  //   //It shows the EditProfile Dialog
+  //   final isDark = Theme
+  //       .of(context)
+  //       .brightness == Brightness.dark;
+  //   final accentColor = isDark ? Colors.white : Colors.black;
+  //
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return StatefulBuilder(
+  //         builder: (context, setStateDialog) {
+  //           return Dialog(
+  //             shape: RoundedRectangleBorder(
+  //               borderRadius: BorderRadius.circular(24),
+  //             ),
+  //             elevation: 20,
+  //             insetPadding: const EdgeInsets.all(20),
+  //             child: Container(
+  //               padding: const EdgeInsets.all(24),
+  //               decoration: BoxDecoration(
+  //                 color: Theme
+  //                     .of(context)
+  //                     .cardColor,
+  //                 borderRadius: BorderRadius.circular(24),
+  //               ),
+  //               child: SingleChildScrollView(
+  //                 child: Column(
+  //                   mainAxisSize: MainAxisSize.min,
+  //                   crossAxisAlignment: CrossAxisAlignment.start,
+  //                   children: [
+  //                     Text(
+  //                       'Edit Profile',
+  //                       style: TextStyle(
+  //                         fontSize: 24,
+  //                         fontWeight: FontWeight.bold,
+  //                         color: accentColor,
+  //                       ),
+  //                     ),
+  //                     const SizedBox(height: 20),
+  //                     _buildPlanCard(
+  //                       context,
+  //                       title: 'Basic',
+  //                       price: '₹99',
+  //                       duration: '1 Month',
+  //                       benefits: [
+  //                         'All Features',
+  //                         'Unlimited Interviews',
+  //                         'Priority Support',
+  //                         'Practice Tests'
+  //                       ],
+  //                       isRecommended: false,
+  //                       selectedPlan: _selectedPlan,
+  //                       onSelect: (plan) {
+  //                         setState(() {
+  //                           _selectedPlan = plan;
+  //                         });
+  //                         setStateDialog(() {});
+  //                       },
+  //                     ),
+  //                     const SizedBox(height: 20),
+  //                     // Center(
+  //                     //   child: TextButton(
+  //                     //     onPressed: () => Navigator.pop(context),
+  //                     //     child:Text(
+  //                     //         "Later",
+  //                     //       textAlign: TextAlign.center,
+  //                     //       style: TextStyle(color:Colors.grey.shade900)
+  //                     //
+  //                     //     )
+  //                     //   )
+  //                     // ),
+  //                     Container(
+  //                       child: Center(
+  //                         child: TextButton(
+  //                           onPressed: () => Navigator.pop(context),
+  //                           child: Text(
+  //                             'Not now',
+  //                             textAlign: TextAlign.center,
+  //                             style: TextStyle(color: Colors.grey.shade900),
+  //                           ),
+  //                         ),
+  //                       ),
+  //
+  //                     ),
+  //
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
+
+
   void _showEditProfileDialog() {
-    //It shows the EditProfile Dialog
-    final isDark = Theme
-        .of(context)
-        .brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = isDark ? Colors.white : Colors.black;
+    final picker = ImagePicker();
+    File? _imageFile;
+    String _name = '';
+    bool _isUploading = false;
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
+            Future<void> _pickImage() async {
+              final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+              if (pickedFile != null) {
+                setStateDialog(() {
+                  _imageFile = File(pickedFile.path);
+                });
+              }
+            }
+
+            Future<void> _saveProfile() async {
+              try {
+                setStateDialog(() {
+                  _isUploading = true;
+                });
+
+                final user = FirebaseAuth.instance.currentUser;
+                if (user == null) return;
+
+                String? imageUrl;
+
+                // Upload image if picked
+                // if (_imageFile != null) {
+                //   final ref = FirebaseStorage.instance
+                //       .ref()
+                //       .child('user_profiles')
+                //       .child('${user.uid}.jpg');
+                //   await ref.putFile(_imageFile!);
+                //   imageUrl = await ref.getDownloadURL();
+                // }
+
+                // Update Firestore
+              //  final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+                final updateData = <String, dynamic>{};
+                if (_name.isNotEmpty) updateData['name'] = _name;
+                if (imageUrl != null) updateData['profileImageUrl'] = imageUrl;
+                //
+                // if (updateData.isNotEmpty) {
+                //   await docRef.update(updateData);
+                // }
+
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Profile updated')),
+                );
+              } catch (e) {
+                print('Error updating profile: $e');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to update profile')),
+                );
+              } finally {
+                setStateDialog(() {
+                  _isUploading = false;
+                });
+              }
+            }
+
             return Dialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
@@ -426,9 +583,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Theme
-                      .of(context)
-                      .cardColor,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: SingleChildScrollView(
@@ -445,52 +600,48 @@ class _ProfileScreenState extends State<ProfileScreen>
                         ),
                       ),
                       const SizedBox(height: 20),
-                      _buildPlanCard(
-                        context,
-                        title: 'Basic',
-                        price: '₹99',
-                        duration: '1 Month',
-                        benefits: [
-                          'All Features',
-                          'Unlimited Interviews',
-                          'Priority Support',
-                          'Practice Tests'
-                        ],
-                        isRecommended: false,
-                        selectedPlan: _selectedPlan,
-                        onSelect: (plan) {
-                          setState(() {
-                            _selectedPlan = plan;
-                          });
-                          setStateDialog(() {});
+                      Center(
+                        child: GestureDetector(
+                          onTap: _pickImage,
+                          child: CircleAvatar(
+                            radius: 48,
+                            backgroundImage:
+                            _imageFile != null ? FileImage(_imageFile!) : null,
+                            child: _imageFile == null
+                                ? Icon(Icons.camera_alt, size: 32, color: Colors.grey.shade900)
+                                : null,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        decoration: InputDecoration(
+                          labelText: 'Name',
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (value) {
+                          _name = value.trim();
                         },
                       ),
                       const SizedBox(height: 20),
-                      // Center(
-                      //   child: TextButton(
-                      //     onPressed: () => Navigator.pop(context),
-                      //     child:Text(
-                      //         "Later",
-                      //       textAlign: TextAlign.center,
-                      //       style: TextStyle(color:Colors.grey.shade900)
-                      //
-                      //     )
-                      //   )
-                      // ),
-                      Container(
-                        child: Center(
-                          child: TextButton(
+                      _isUploading
+                          ? Center(child: CircularProgressIndicator())
+                          : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          TextButton(
                             onPressed: () => Navigator.pop(context),
                             child: Text(
-                              'Not now',
-                              textAlign: TextAlign.center,
+                              'Cancel',
                               style: TextStyle(color: Colors.grey.shade900),
                             ),
                           ),
-                        ),
-
+                          ElevatedButton(
+                            onPressed: _saveProfile,
+                            child: Text('Save'),
+                          ),
+                        ],
                       ),
-
                     ],
                   ),
                 ),
@@ -501,6 +652,8 @@ class _ProfileScreenState extends State<ProfileScreen>
       },
     );
   }
+
+
 
 
 
