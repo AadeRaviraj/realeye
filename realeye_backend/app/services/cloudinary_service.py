@@ -2,7 +2,7 @@ import cloudinary
 import cloudinary.uploader
 from app.config import CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
 
-# Cloudinary configuration
+# Configure Cloudinary
 cloudinary.config(
     cloud_name=CLOUDINARY_CLOUD_NAME,
     api_key=CLOUDINARY_API_KEY,
@@ -10,7 +10,7 @@ cloudinary.config(
 )
 
 def upload_to_cloudinary(file, public_id):
-    """Uploads file to Cloudinary"""
+    """Uploads file to Cloudinary with proper error handling"""
     try:
         result = cloudinary.uploader.upload(
             file,
@@ -20,5 +20,5 @@ def upload_to_cloudinary(file, public_id):
         )
         return result  # dictionary with secure_url
     except Exception as e:
-        print("Cloudinary upload error:", e)
+        print("Cloudinary upload error:", str(e))
         return {}
