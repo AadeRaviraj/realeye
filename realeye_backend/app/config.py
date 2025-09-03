@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-# .env load करा
+ 
 load_dotenv()
 
 CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
