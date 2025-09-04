@@ -1,6 +1,9 @@
+import 'dart:convert' show jsonDecode;
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:http/http.dart' as http;
 import 'signin_screen.dart';
 import 'dart:io'; // For File
 import 'package:image_picker/image_picker.dart';// For picking images
@@ -18,6 +21,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     // handle the click actions
     with SingleTickerProviderStateMixin {
   final _auth = FirebaseAuth.instance;
+
   final _dbRef = FirebaseDatabase.instance.ref().child('users');
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -28,14 +32,47 @@ class _ProfileScreenState extends State<ProfileScreen>
   String _userEmail = '';
   String _userRole = '';
   bool _isLoading = true;
+  String? _profileImageUrl;
+
+
   int _selectedTab = 0;
   final ConfettiController _confettiController = ConfettiController(duration: const Duration(seconds: 2));
   final ScrollController _scrollController = ScrollController();
 
+  ImageProvider get profileImageProvider {
+    return _profileImageUrl != null
+        ? NetworkImage(_profileImageUrl!)
+        : const AssetImage('assets/images/angryp_cricle.png');
+  }
+
+
   @override
   void initState() {
     super.initState();
+ //  _loadUserData();
     _loadUserData();
+
+
+    final user = _auth.currentUser;
+    if (user != null) {
+      //  Listen for real-time changes in this user's data
+      _dbRef.child(user.uid).onValue.listen((event) {
+        final snap = event.snapshot;
+        //  Check if data exists for this user
+        if (snap.exists) {
+          setState(() {
+            //  Update the state variables with latest values from Firebase
+            _userName = snap.child('full_name').value?.toString() ?? '';
+            _userEmail = user.email ?? '';   // Email comes directly from FirebaseAuth
+            _userRole = snap.child('role').value?.toString() ?? '';
+
+            //  Once data is loaded, stop showing the loading indicator
+            _isLoading = false;
+          });
+        }
+      });
+    }
+
 
     // Initialize animations
     _animationController = AnimationController(
@@ -60,28 +97,39 @@ class _ProfileScreenState extends State<ProfileScreen>
     _animationController.forward();
   }
 
+
+  void _loadUserData() async {
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final snapshot = await FirebaseDatabase.instance
+        .ref()
+        .child("users")
+        .child(user.uid)
+        .get();
+
+    if (snapshot.exists) {
+      final data = snapshot.value as Map;
+      setState(() {
+        _userName = data['full_name'] ?? 'Your Name';
+        _userRole = data['role'] ?? 'User';
+        _profileImageUrl = data['profile_image'];
+      });
+    }
+  }
+
+
   @override
   void dispose() {
     _animationController.dispose();
     _confettiController.dispose();
     _scrollController.dispose();
+// _showEditProfileDialog();
     super.dispose();
   }
 
-  Future<void> _loadUserData() async {
-    final user = _auth.currentUser;
-    if (user != null) {
-      final snap = await _dbRef.child(user.uid).get();
-      if (snap.exists) {
-        setState(() {
-          _userName = snap.child('full_name').value?.toString() ?? '';
-          _userEmail = user.email ?? '';
-          _userRole = snap.child('role').value?.toString() ?? '';
-          _isLoading = false;
-        });
-      }
-    }
-  }
+
 
   void _logout() async {
     await _auth.signOut();
@@ -102,6 +150,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     //Uses this function for when user click on the user profile
     //then it show the full image
     showDialog(
+
       context: context,
       builder: (context) {
         return Dialog(
@@ -116,11 +165,28 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: Center(
                 child: Hero(
                   tag: 'profile-picture',
-                  child: Image.asset(
-                    'assets/images/angryp_cricle.png',
-                    fit: BoxFit.contain,
-                  ),
+                  child:   _profileImageUrl != null
+                ? Image.network(
+                _profileImageUrl!,
+                  fit: BoxFit.contain,
+                )
+                    :Image.asset(
+                'assets/images/angryp_cricle.png',
+                fit: BoxFit.contain,
+              ),
                 ),
+
+
+             // thsi is ciurcular style
+                // child: Hero(
+                //   tag: 'profile-picture',
+                //   child: CircleAvatar(
+                //     radius: 60,
+                //     backgroundImage: _profileImageUrl != null
+                //         ? NetworkImage(_profileImageUrl!)
+                //         : const AssetImage('assets/images/angryp_cricle.png'),
+                //   ),
+                // ),
               ),
             ),
           ),
@@ -264,6 +330,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         ? accentColor
         : (isDark ? Colors.grey.shade900 : Colors.white);
 
+
     Color textColor = isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge!.color!;
 
     Color buttonColor = isSelected ? Colors.white : accentColor;
@@ -406,112 +473,15 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   }
 
-  // In this Function We Handled the User Profile Update and User detail Updation
-  // void _showEditProfileDialog() {
-  //   //It shows the EditProfile Dialog
-  //   final isDark = Theme
-  //       .of(context)
-  //       .brightness == Brightness.dark;
-  //   final accentColor = isDark ? Colors.white : Colors.black;
-  //
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return StatefulBuilder(
-  //         builder: (context, setStateDialog) {
-  //           return Dialog(
-  //             shape: RoundedRectangleBorder(
-  //               borderRadius: BorderRadius.circular(24),
-  //             ),
-  //             elevation: 20,
-  //             insetPadding: const EdgeInsets.all(20),
-  //             child: Container(
-  //               padding: const EdgeInsets.all(24),
-  //               decoration: BoxDecoration(
-  //                 color: Theme
-  //                     .of(context)
-  //                     .cardColor,
-  //                 borderRadius: BorderRadius.circular(24),
-  //               ),
-  //               child: SingleChildScrollView(
-  //                 child: Column(
-  //                   mainAxisSize: MainAxisSize.min,
-  //                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                   children: [
-  //                     Text(
-  //                       'Edit Profile',
-  //                       style: TextStyle(
-  //                         fontSize: 24,
-  //                         fontWeight: FontWeight.bold,
-  //                         color: accentColor,
-  //                       ),
-  //                     ),
-  //                     const SizedBox(height: 20),
-  //                     _buildPlanCard(
-  //                       context,
-  //                       title: 'Basic',
-  //                       price: '₹99',
-  //                       duration: '1 Month',
-  //                       benefits: [
-  //                         'All Features',
-  //                         'Unlimited Interviews',
-  //                         'Priority Support',
-  //                         'Practice Tests'
-  //                       ],
-  //                       isRecommended: false,
-  //                       selectedPlan: _selectedPlan,
-  //                       onSelect: (plan) {
-  //                         setState(() {
-  //                           _selectedPlan = plan;
-  //                         });
-  //                         setStateDialog(() {});
-  //                       },
-  //                     ),
-  //                     const SizedBox(height: 20),
-  //                     // Center(
-  //                     //   child: TextButton(
-  //                     //     onPressed: () => Navigator.pop(context),
-  //                     //     child:Text(
-  //                     //         "Later",
-  //                     //       textAlign: TextAlign.center,
-  //                     //       style: TextStyle(color:Colors.grey.shade900)
-  //                     //
-  //                     //     )
-  //                     //   )
-  //                     // ),
-  //                     Container(
-  //                       child: Center(
-  //                         child: TextButton(
-  //                           onPressed: () => Navigator.pop(context),
-  //                           child: Text(
-  //                             'Not now',
-  //                             textAlign: TextAlign.center,
-  //                             style: TextStyle(color: Colors.grey.shade900),
-  //                           ),
-  //                         ),
-  //                       ),
-  //
-  //                     ),
-  //
-  //                   ],
-  //                 ),
-  //               ),
-  //             ),
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
-
 
   void _showEditProfileDialog() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = isDark ? Colors.white : Colors.black;
     final picker = ImagePicker();
     File? _imageFile;
-    String _name = '';
+    String _name = _userName;
     bool _isUploading = false;
+    bool _isModified = false; // if teh user change their name of phtoto
 
     showDialog(
       context: context,
@@ -521,8 +491,19 @@ class _ProfileScreenState extends State<ProfileScreen>
             Future<void> _pickImage() async {
               final pickedFile = await picker.pickImage(source: ImageSource.gallery);
               if (pickedFile != null) {
+                // Size check (1MB)
+                final bytes = await pickedFile.readAsBytes();
+                final sizeMB = bytes.length / (1024 * 1024);
+                if (sizeMB > 1) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Image must be <= 1MB')),
+                  );
+                  return;
+                }
+
                 setStateDialog(() {
                   _imageFile = File(pickedFile.path);
+                  _isModified = true; //  user change their  photo , mark as user change their photo
                 });
               }
             }
@@ -538,34 +519,49 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                 String? imageUrl;
 
-                // Upload image if picked
-                // if (_imageFile != null) {
-                //   final ref = FirebaseStorage.instance
-                //       .ref()
-                //       .child('user_profiles')
-                //       .child('${user.uid}.jpg');
-                //   await ref.putFile(_imageFile!);
-                //   imageUrl = await ref.getDownloadURL();
-                // }
+                // Upload to Flask backend (Cloudinary)
+                if (_imageFile != null) {
+                  final uri = Uri.parse('https://realeye.onrender.com/api/upload-profile');
+                  final request = http.MultipartRequest('POST', uri)
+                    ..files.add(await http.MultipartFile.fromPath('image', _imageFile!.path))
+                    ..fields['user_id'] = user.uid;
 
-                // Update Firestore
-              //  final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
-                final updateData = <String, dynamic>{};
-                if (_name.isNotEmpty) updateData['name'] = _name;
-                if (imageUrl != null) updateData['profileImageUrl'] = imageUrl;
-                //
-                // if (updateData.isNotEmpty) {
-                //   await docRef.update(updateData);
-                // }
+                  final response = await request.send();
+                  final respStr = await response.stream.bytesToString();
+
+                  if (response.statusCode == 200) {
+                    final data = jsonDecode(respStr);
+                    imageUrl = data['secure_url'];
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Upload failed')),
+                    );
+                  }
+                }
+
+                //  Update in Firebase Realtime Database
+                final updates = <String, dynamic>{};
+                if (_name.isNotEmpty) updates['full_name'] = _name;
+                if (imageUrl != null) updates['profile_image'] = imageUrl;
+
+                await FirebaseDatabase.instance
+                    .ref()
+                    .child("users")
+                    .child(user.uid)
+                    .update(updates);
 
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Profile updated')),
+                  const SnackBar(content: Text('Profile updated successfully')),
                 );
+                //after upload teh image
+                setState(() {
+                  _profileImageUrl = imageUrl; // after upload
+                });
               } catch (e) {
                 print('Error updating profile: $e');
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Failed to update profile')),
+                  SnackBar(content: Text('Failed to update profile: $e')),
                 );
               } finally {
                 setStateDialog(() {
@@ -573,6 +569,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                 });
               }
             }
+            TextEditingController _nameController = TextEditingController(text: _name);
+
 
             return Dialog(
               shape: RoundedRectangleBorder(
@@ -614,18 +612,36 @@ class _ProfileScreenState extends State<ProfileScreen>
                         ),
                       ),
                       const SizedBox(height: 20),
+                      // TextField(
+                      //   controller: TextEditingController(text: _name),
+                      //   decoration: const InputDecoration(
+                      //     labelText: 'Name',
+                      //     border: OutlineInputBorder(),
+                      //   ),
+                      //   onChanged: (value) {
+                      //     _name = value.trim();
+                      //     setStateDialog(() {
+                      //       _isModified = true; // User change teir name
+                      //     });
+                      //   },
+                      // ),
+
                       TextField(
-                        decoration: InputDecoration(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
                           labelText: 'Name',
                           border: OutlineInputBorder(),
                         ),
                         onChanged: (value) {
                           _name = value.trim();
+                          setStateDialog(() {
+                            _isModified = true; // User changed their name
+                          });
                         },
                       ),
                       const SizedBox(height: 20),
                       _isUploading
-                          ? Center(child: CircularProgressIndicator())
+                          ? const Center(child: CircularProgressIndicator())
                           : Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -637,8 +653,23 @@ class _ProfileScreenState extends State<ProfileScreen>
                             ),
                           ),
                           ElevatedButton(
-                            onPressed: _saveProfile,
-                            child: Text('Save'),
+
+                           // onPressed: _saveProfile,
+                            //child: const Text('Save'),
+
+                            onPressed: _isModified ? _saveProfile : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _isModified
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.grey.shade300,
+                            ),
+                            child: Text(
+                              'Save',
+                              style: TextStyle(
+                                color: _isModified ? Colors.white : Colors.grey.shade600,
+                              ),
+                            ),
+
                           ),
                         ],
                       ),
@@ -652,7 +683,6 @@ class _ProfileScreenState extends State<ProfileScreen>
       },
     );
   }
-
 
 
 
@@ -723,8 +753,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
                                           border: Border.all(color: Colors.white, width: 3),
-                                          image: const DecorationImage(
-                                            image: AssetImage('assets/images/angryp_cricle.png'),
+                                          image: DecorationImage(
+                                            image: _profileImageUrl != null
+                                                ? NetworkImage(_profileImageUrl!)
+                                                : const AssetImage('assets/images/angryp_cricle.png') as ImageProvider,
                                             fit: BoxFit.cover,
                                           ),
                                         ),
@@ -746,7 +778,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                         child: IconButton(
                                           padding: EdgeInsets.zero,
                                           icon: const Icon(Icons.edit, size: 16, color: Colors.white),
-                                          onPressed: () {},
+                                          onPressed: () => _showEditProfileDialog(),
                                         ),
                                       ),
                                     ),
@@ -1595,12 +1627,15 @@ class _SubscriptionCard extends StatelessWidget {
 class _AppSettings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+   // final themeProvider = Provider.of<ThemeProvider>(context);
     return Card(
+
       elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
       child: Padding(
+
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -1610,11 +1645,16 @@ class _AppSettings extends StatelessWidget {
               trailing: Switch(value: true, onChanged: (value) {}),
             ),
             const Divider(),
+
             _SettingsItem(
               icon: Icons.dark_mode,
               title: 'Dark Mode',
               trailing: Switch(value: false, onChanged: (value) {}),
-            ),
+            //     trailing: Switch(
+            //       value: themeProvider.isDarkMode,
+            //       onChanged: (value) => themeProvider.toggleTheme(value),
+            //     ),
+           ),
             const Divider(),
             _SettingsItem(
               icon: Icons.security,
@@ -1626,6 +1666,12 @@ class _AppSettings extends StatelessWidget {
               icon: Icons.help,
               title: 'Help & Support',
               trailing: const Icon(Icons.arrow_forward),
+            ),
+            const Divider(),
+            _SettingsItem(
+                icon: Icons.star_rate,
+                title: "Rate Us",
+                trailing:const Icon( Icons.rate_review_rounded)
             ),
           ],
         ),
@@ -1810,17 +1856,18 @@ class AboutUsScreen extends StatelessWidget {
               _buildTeamMemberCard(
                 context,
                 name: 'Pooja Borgavi',
-                role: 'UI Designer ',
-                image: 'assets/images/pooja.jpeg',
+                role: 'Python Developer(Ai)',
+               // image: 'assets/images/pooja.jpeg', // old image
+                image: 'assets/images/pooja2.jpg',
                 color: Colors.pink,
                 info:
-                'Pixel Perfectionist\nCreative Visionary\nUI/UX Alchemist\n - realeye',
+                'Training Models \nCreative Visionary\nML\n - realeye',
                 quote: '"Design is intelligence made visible"',
               ),
               _buildTeamMemberCard(
                 context,
                 name: 'Vikaskumar Chaurasiya',
-                role: 'QA Analyst ',
+                role: 'Python Developer(API) / QA Analyst ',
                 image: 'assets/images/vikas.jpg',
                 color: Colors.blueAccent,
                 info:
@@ -1830,8 +1877,9 @@ class AboutUsScreen extends StatelessWidget {
               _buildTeamMemberCard(
                 context,
                 name: 'Raviraj Aade',
-                role: 'Backend Developer',
-                image: 'assets/images/raviraj.jpg',
+                role: 'Flutter Developer ',
+
+                image: 'assets/images/raviraj2.png', // image: 'assets/images/raviraj.jpg',
                 color: Colors.purple,
                 info: 'Code Architect\nServer Wizard\nDatabase\n - realeye',
                 quote: '"First solve the problem, then write the code"',

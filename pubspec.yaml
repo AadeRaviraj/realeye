@@ -38,6 +38,7 @@ dependencies:
   firebase_database: 11.2.0
   animated_text_kit: ^4.2.3
   image_picker: ^1.1.0
+  shared_preferences: ^2.2.2
 
 
 
@@ -89,8 +90,10 @@ flutter:
     - assets/images/twitter.png
     - assets/images/angryp_cricle.png
     - assets/images/pooja.jpeg
+    - assets/images/pooja2.jpg
     - assets/images/vikas.jpg
     - assets/images/raviraj.jpg
+    - assets/images/raviraj2.png
     - assets/images/eyeblink.gif
     - assets/images/aiwork.gif
     - assets/questions.json

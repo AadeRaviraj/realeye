@@ -83,9 +83,6 @@ class _SignupScreenState extends State<SignupScreen> {
         _showSnackBar(" Signup Successful!");
 
         Navigator.pushReplacementNamed(context, '/login');
-        // // **Step 3: Navigate to Login Screen and close Signup Screen**
-        // Navigator.pop(context); // Close the Signup Screen
-        // Navigator.pushNamed(context, '/login'); // Open the Login Screen
       }).catchError((error) {
         print(" Database Error: $error");
         _showSnackBar(" Failed to store user data: $error");
