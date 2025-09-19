@@ -4,10 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:http/http.dart' as http;
-import 'signin_screen.dart';
-import 'dart:io'; // For File
 import 'package:image_picker/image_picker.dart';// For picking images
 import 'package:confetti/confetti.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
+import '../design/language_provider.dart';
+import 'signin_screen.dart';
+import 'dart:io'; // For File
+import 'package:realeyes/design/theme_provider.dart';// import theme class providr form services folder
+import 'package:realeyes/generated/app_localizations.dart';
+
+
+
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -879,8 +888,6 @@ class _ProfileScreenState extends State<ProfileScreen>
 
 
   Widget _buildTabBar() {
-
-
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
@@ -920,6 +927,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       ),
     );
   }
+
 
   Widget _buildTabContent() {
     return IndexedStack(
@@ -987,7 +995,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             onEditProfile: _showEditProfileDialog,
           ),
           const SizedBox(height: 24),
-          _AppSettings(),
+        //  _AppSettings(),
           const SizedBox(height: 24),
         ],
       ),
@@ -1624,53 +1632,127 @@ class _SubscriptionCard extends StatelessWidget {
 }
 
 // App Settings Widget
-class _AppSettings extends StatelessWidget {
+// class _AppSettings extends StatelessWidget {
+//   bool _isSwitched = true;
+class _AppSettings extends StatefulWidget {
+  @override
+  State<_AppSettings> createState() => _AppSettingsState();
+}
+
+class _AppSettingsState extends State<_AppSettings> {
+  bool _isSwitched = true;
   @override
   Widget build(BuildContext context) {
-   // final themeProvider = Provider.of<ThemeProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context); // theme provider variable  it stores teh theme
+    final languageProvider = Provider.of<LanguageProvider>(context); // language provider
+
+//    final currentLocale = languageProvider.locale ?? Localizations.localeOf(context);
+//     final currentLocale = languageProvider.locale;
+    final currentLocale = Provider.of<LanguageProvider>(context).locale;
+    print("ProfileScreen: currentLocale = $currentLocale");
+    print("ProfileScreen: Localizations.localeOf(context) = ${Localizations.localeOf(context)}");
+    print("ProfileScreen: AppLocalizations.of(context).changeLanguage = ${AppLocalizations.of(context).changeLanguage}");
+
     return Card(
 
       elevation: 4,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(1),
       ),
       child: Padding(
 
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(15),
         child: Column(
           children: [
             _SettingsItem(
               icon: Icons.notifications,
-              title: 'Notifications',
-              trailing: Switch(value: true, onChanged: (value) {}),
+              // title: 'Notifications',
+              title: AppLocalizations.of(context).notifications,
+              trailing: Switch(
+                value: _isSwitched, // This should be a boolean variable in your state
+                onChanged: (value) {
+                  // setState(() {
+                  //   _isSwitched = value;
+                  // });
+                },
+              ),
+
             ),
             const Divider(),
 
             _SettingsItem(
               icon: Icons.dark_mode,
-              title: 'Dark Mode',
-              trailing: Switch(value: false, onChanged: (value) {}),
+              // title: 'Dark Mode',
+              title: AppLocalizations.of(context).darkMode,
+              trailing: Switch(
+                value: themeProvider.isDarkMode,
+                onChanged: (value) {
+                  themeProvider.toggleTheme(value);
+                },
+              ),
             //     trailing: Switch(
             //       value: themeProvider.isDarkMode,
             //       onChanged: (value) => themeProvider.toggleTheme(value),
             //     ),
            ),
             const Divider(),
+
+            // ListTile(
+            //   leading: const Icon(Icons.language),
+            //   title: Text(AppLocalizations.of(context)!.changeLanguage),
+            // ),
+            Consumer<LanguageProvider>(
+              builder: (context, languageProvider, child) {
+                return ListTile(
+                  leading: const Icon(Icons.language),
+                  title: Text(AppLocalizations.of(context).changeLanguage),
+                );
+              },
+            ),
+            RadioListTile<Locale>(
+              title: const Text("English"),
+              value: const Locale('en'),
+              groupValue: currentLocale,
+              onChanged: (Locale? locale) {
+                if (locale != null) languageProvider.setLocale(locale);
+              },
+            ),
+            RadioListTile<Locale>(
+              title: const Text("मराठी"),
+              value: const Locale('mr'),
+              groupValue: currentLocale,
+              onChanged: (Locale? locale) {
+                if (locale != null) languageProvider.setLocale(locale);
+              },
+            ),
+            RadioListTile<Locale>(
+              title: const Text("हिंदी"),
+              value: const Locale('hi'),
+              groupValue: currentLocale,
+              onChanged: (Locale? locale) {
+                if (locale != null) languageProvider.setLocale(locale);
+              },
+            ),
+
+            const Divider(),
             _SettingsItem(
               icon: Icons.security,
-              title: 'Privacy & Security',
+              // title: 'Privacy & Security',
+              title: AppLocalizations.of(context).privacySecurity,
               trailing: const Icon(Icons.arrow_forward),
             ),
             const Divider(),
             _SettingsItem(
               icon: Icons.help,
-              title: 'Help & Support',
+              // title: 'Help & Support',
+              title: AppLocalizations.of(context).helpSupport,
               trailing: const Icon(Icons.arrow_forward),
             ),
             const Divider(),
             _SettingsItem(
                 icon: Icons.star_rate,
-                title: "Rate Us",
+                // title: "Rate Us",
+                title: AppLocalizations.of(context).rateUs,
                 trailing:const Icon( Icons.rate_review_rounded)
             ),
           ],
@@ -1737,7 +1819,12 @@ class _ActionsGrid extends StatelessWidget {
           icon: Icons.settings,
           label: 'Settings',
           color: const Color(0xFF000957),
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+                MaterialPageRoute(builder: (context) => const SettingScreen()),
+            );
+          },
         ),
         _ActionButton(
           icon: Icons.credit_card,
@@ -1758,7 +1845,7 @@ class _ActionsGrid extends StatelessWidget {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const AboutUsScreen()),
+              MaterialPageRoute(builder: (context) => const AboutUsScreen()), // navigate the about screen
             );
           },
         ),
@@ -1979,6 +2066,58 @@ class AboutUsScreen extends StatelessWidget {
             ),
           ],
         )
+    );
+  }
+}
+
+
+// Setting screen
+class SettingScreen extends StatelessWidget {
+  const SettingScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+
+    // Define the style
+    final SystemUiOverlayStyle overlayStyle = SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark, // dark icons if light theme
+      statusBarBrightness: isDark ? Brightness.dark : Brightness.light,     // for iOS
+      systemNavigationBarColor: Theme.of(context).scaffoldBackgroundColor,
+      systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+    );
+
+    // Apply globally once per build
+    SystemChrome.setSystemUIOverlayStyle(overlayStyle);
+
+    return Scaffold(
+      extendBodyBehindAppBar: true,  // to let background under status bar
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text('Settings'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        // Very important: set the AppBar's systemOverlayStyle explicitly:
+        systemOverlayStyle: overlayStyle,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            color: isDark ? Colors.white : Colors.black,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SafeArea(
+        // Optionally use SafeArea so content doesn't go under notch, etc.
+        child: Column(
+          children: [
+            const SizedBox(height: 16),
+            _AppSettings(),
+          ],
+        ),
+      ),
     );
   }
 }

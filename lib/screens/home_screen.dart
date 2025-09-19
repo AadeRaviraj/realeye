@@ -57,9 +57,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (snapshot.exists) {
       final data = snapshot.value as Map<dynamic, dynamic>;
-      setState(() {
-        _profileImageUrl = data['profile_image'];
-      });
+      if (mounted) {
+        setState(() {
+          _profileImageUrl = data['profile_image'];
+        });
+      }
     }
   }
 
@@ -70,15 +72,19 @@ class _HomeScreenState extends State<HomeScreen> {
     if (user != null) {
       DataSnapshot snapshot = await _database.child("users").child(user.uid).get();
       if (snapshot.exists) {
-        String name = snapshot.child("full_name").value.toString();
+        String name = snapshot
+            .child("full_name")
+            .value
+            .toString();
 
         // Save locally
         SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.setString('username', name);
-
-        setState(() {
-          _username = name;
-        });
+        if (mounted) {
+          setState(() {
+            _username = name;
+          });
+        }
       }
     }
   }
@@ -110,20 +116,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // function is used for changing teh screen inside teh scafffold using index value
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      _showFaceDetection = false;
-    });
+    if (mounted) {
+      setState(() {
+        _selectedIndex = index;
+        _showFaceDetection = false;
+      });
+    }
   }
 
   // used future  class for implement the database(firebase fetch) handle
   Future<bool> _onWillPop() async {
     if (_showFaceDetection) {
-      setState(() {
-        _showFaceDetection = false;
-        _selectedIndex = 0;
-      });
-      return false;
+      if (mounted) {
+        setState(() {
+          _showFaceDetection = false;
+          _selectedIndex = 0;
+        });
+        return false;
+      }
     }
     // if you try to logout then it will by wait the screen
     return await showDialog(

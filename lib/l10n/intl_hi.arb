@@ -1,0 +1,11 @@
+{
+  "@@locale": "hi",
+  "hello": "नमस्ते",
+  "profile": "प्रोफ़ाइल",
+  "changeLanguage": "भाषा बदलें",
+  "notifications": "सूचनाएं",
+  "darkMode": "डार्क मोड",
+  "privacySecurity": "गोपनीयता और सुरक्षा",
+  "helpSupport": "सहायता और समर्थन",
+  "rateUs": "हमें रेट करें"
+}
