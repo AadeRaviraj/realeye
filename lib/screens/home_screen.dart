@@ -6,6 +6,8 @@ import 'InterviewPrep_screen.dart';
 import 'faceDetection_screen.dart';
 import 'profile_screen.dart';
 import 'study_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -18,6 +20,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
   int _selectedIndex = 0;
   bool _showFaceDetection = false;
+  String? _profileImageUrl;
+
   String motivationalQuote = 'The future begins with knowledge';
   final ScrollController _scrollController = ScrollController();
 
@@ -26,7 +30,9 @@ class _HomeScreenState extends State<HomeScreen> {
     // This function runs once when the widget is created.
     // We use it to initialize data or start tasks, like fetching user data.
     super.initState();
-    _fetchUserData();
+   // _loadCachedUser();
+    _fetchUserData(); // fetch the user data
+    _loadUserProfileImage(); // fetch the user image
   }
 
 
@@ -38,19 +44,65 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+//fetch teh user image from firebase , current reference id
+  void _loadUserProfileImage() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-  void _fetchUserData() async {
-    // function is used for fetch the user name from the firebase
-    User? user = _auth.currentUser;
-    if (user != null) {
-      DataSnapshot snapshot = await _database.child("users").child(user.uid).get();
-      if (snapshot.exists) {
+    final snapshot = await FirebaseDatabase.instance
+        .ref()
+        .child("users")
+        .child(user.uid)
+        .get();
+
+    if (snapshot.exists) {
+      final data = snapshot.value as Map<dynamic, dynamic>;
+      if (mounted) {
         setState(() {
-          _username = snapshot.child("full_name").value.toString();
+          _profileImageUrl = data['profile_image'];
         });
       }
     }
   }
+
+
+// fetch the  user name
+  void _fetchUserData() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      DataSnapshot snapshot = await _database.child("users").child(user.uid).get();
+      if (snapshot.exists) {
+        String name = snapshot
+            .child("full_name")
+            .value
+            .toString();
+
+        // Save locally
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setString('username', name);
+        if (mounted) {
+          setState(() {
+            _username = name;
+          });
+        }
+      }
+    }
+  }
+
+  // void _loadCachedUser() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   String? name = prefs.getString('username');
+  //   if (name != null) {
+  //     setState(() {
+  //       _username = name;
+  //     });
+  //   }
+  // }
+
+
+
+
+
 
 
   void _logout() async {
@@ -64,20 +116,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // function is used for changing teh screen inside teh scafffold using index value
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      _showFaceDetection = false;
-    });
+    if (mounted) {
+      setState(() {
+        _selectedIndex = index;
+        _showFaceDetection = false;
+      });
+    }
   }
 
   // used future  class for implement the database(firebase fetch) handle
   Future<bool> _onWillPop() async {
     if (_showFaceDetection) {
-      setState(() {
-        _showFaceDetection = false;
-        _selectedIndex = 0;
-      });
-      return false;
+      if (mounted) {
+        setState(() {
+          _showFaceDetection = false;
+          _selectedIndex = 0;
+        });
+        return false;
+      }
     }
     // if you try to logout then it will by wait the screen
     return await showDialog(
@@ -426,6 +482,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
 //Silver App bar to implement teh userprofile screen
   SliverAppBar _buildCustomSliverAppBar() {
+
+    ImageProvider profileImageProvider = _profileImageUrl != null
+        ? NetworkImage(_profileImageUrl!)
+        : const AssetImage('assets/images/angryp_cricle.png');
+
+
     return SliverAppBar(
       expandedHeight: 200.0,
       pinned: true,
@@ -454,7 +516,9 @@ class _HomeScreenState extends State<HomeScreen> {
   },
             child: _CollapsingProfileImage(
               scrollController: _scrollController,
-              image: AssetImage('assets/images/angryp_cricle.png'),
+//              image: AssetImage('assets/images/angryp_cricle.png'),
+              image:profileImageProvider , // set the image  when icon is small then
+
               size: 48,  // bigger image size here
               visibilityTrigger: 0.5,
             ),
@@ -511,10 +575,17 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // CircleAvatar(
+                //   radius: 40,
+                //   backgroundImage: AssetImage('assets/images/angryp_cricle.png'),
+                // ),
                 CircleAvatar(
-                  radius: 40,
-                  backgroundImage: AssetImage('assets/images/angryp_cricle.png'),
+                  radius: 48,
+                  backgroundImage: _profileImageUrl != null
+                      ? NetworkImage(_profileImageUrl!)
+                      : const AssetImage('assets/images/angryp_cricle.png') as ImageProvider,
                 ),
+
                 SizedBox(height: 10),
                 Text(
                   "Hello, $_username....!",

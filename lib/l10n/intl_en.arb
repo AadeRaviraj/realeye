@@ -1,0 +1,11 @@
+{
+  "@@locale": "en",
+  "hello": "Hello",
+  "profile": "Profile",
+  "changeLanguage": "Change Language",
+  "notifications": "Notifications",
+  "darkMode": "Dark Mode",
+  "privacySecurity": "Privacy & Security",
+  "helpSupport": "Help & Support",
+  "rateUs": "Rate Us"
+}
