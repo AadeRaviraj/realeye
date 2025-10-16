@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +19,7 @@ import 'package:realeyes/generated/app_localizations.dart';
 void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
+  print("Using renderer: ${ui.PlatformDispatcher.instance.implicitView?.renderingBackend}");
 
   final languageProvider = LanguageProvider();
   await languageProvider.loadLocale();
@@ -44,6 +47,10 @@ void main() async {
   } catch (e) {
     print('Error initializing Firebase: $e');
   }
+}
+
+extension on ui.FlutterView? {
+  get renderingBackend => null;
 }
 
 class MyApp extends StatelessWidget {

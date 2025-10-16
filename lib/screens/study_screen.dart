@@ -385,7 +385,7 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
         ),
       ),
 
-      // Chat with AI FAB
+      // Chat with AI Floating Button
         floatingActionButton: Container(
           height: 56,
           decoration: BoxDecoration(
@@ -413,6 +413,7 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
             child: InkWell(
               borderRadius: BorderRadius.circular(28),
               onTap: () {
+                // show teh Ai dialog
                 _showChatDialog(context);
               },
               child: Padding(
@@ -435,95 +436,85 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
             ),
           ),
         ),
+
+
+
     );
-
-
-
-        //     floatingActionButton: FloatingActionButton.extended(
-  //       onPressed: () {
-  //         _showChatDialog(context);
-  //       },
-  //       icon: Icon(Icons.chat),
-  //       label: Text('Chat with AI'),
-  //       backgroundColor: Theme.of(context).colorScheme.primary,
-  //       foregroundColor: Theme.of(context).colorScheme.onPrimary,
-  //     ),
-  //   );
    }
 
   // This is an teh job ready widget
-  // Widget _buildJobReadyCard() {
-  //   return Card(
-  //     elevation: 4,
-  //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-  //     child: Container(
-  //       width: double.infinity,
-  //       padding: EdgeInsets.all(20),
-  //       decoration: BoxDecoration(
-  //         borderRadius: BorderRadius.circular(16),
-  //         gradient: LinearGradient(
-  //           begin: Alignment.topLeft,
-  //           end: Alignment.bottomRight,
-  //           // colors: [
-  //           //   Theme.of(context).colorScheme.primary,
-  //           //   Theme.of(context).colorScheme.primary.withOpacity(0.1),
-  //           // ],
-  //           colors: [
-  //             Colors.lightBlue,
-  //             Colors.purpleAccent.shade400,
-  //           ],
-  //         ),
-  //       ),
-  //       child: Column(
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           Row(
-  //             children: [
-  //               Icon(Icons.work, size: 28, color: Colors.white),
-  //               SizedBox(width: 8),
-  //               Text(
-  //                 'Job Ready Program',
-  //                 style: TextStyle(
-  //                   fontSize: 20,
-  //                   fontWeight: FontWeight.bold,
-  //                   color: Colors.white,
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //           SizedBox(height: 12),
-  //           Text(
-  //             'Industry-focused learning paths to launch your tech career',
-  //             style: TextStyle(
-  //               fontSize: 16,
-  //               color: Colors.white.withOpacity(0.9),
-  //             ),
-  //           ),
-  //           SizedBox(height: 16),
-  //           // Realeye branding
-  //           Align(
-  //             alignment: Alignment.bottomRight,
-  //             child: Container(
-  //               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-  //               decoration: BoxDecoration(
-  //                 color: Colors.white.withOpacity(0.2),
-  //                 borderRadius: BorderRadius.circular(8),
-  //               ),
-  //               child: Text(
-  //                 'Realeye',
-  //                 style: TextStyle(
-  //                   color: Colors.white,
-  //                   fontWeight: FontWeight.bold,
-  //                   fontSize: 12,
-  //                 ),
-  //               ),
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
+  Widget _buildJobReadyCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            // colors: [
+            //   Theme.of(context).colorScheme.primary,
+            //   Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            // ],
+            colors: [
+              Colors.lightBlue,
+              Colors.purpleAccent.shade400,
+            ],
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.work, size: 28, color: Colors.white),
+                SizedBox(width: 8),
+                Text(
+                  'Job Ready Program',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Industry-focused learning paths to launch your tech career',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white.withOpacity(0.9),
+              ),
+            ),
+            SizedBox(height: 16),
+            // Realeye branding
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Realeye',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
 
   // Build the list of Job Ready courses
@@ -573,7 +564,7 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
     );
   }
 
-  // Show chat dialog
+  // Show Ai chat dialog
   void _showChatDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -664,6 +655,8 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
       },
     );
   }
+
+
 
 
 }
