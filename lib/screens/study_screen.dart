@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/foundation.dart';
-
-
+import 'ai_chat_screen.dart';
+import 'package:realeyes/ai_chat/chat_screen.dart';
 
 // Data models
 class JobReadyCourse {
@@ -58,11 +58,11 @@ class StudyScreen extends StatefulWidget {
   _StudyScreenState createState() => _StudyScreenState();
 }
 
-class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStateMixin {
+class _StudyScreenState extends State<StudyScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _slideAnimation;
-
 
   // Sample data for Job Ready courses
   final List<JobReadyCourse> jobReadyCourses = [
@@ -77,14 +77,24 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
           description: "Learn the basics of computer fundamental",
           icon: Icons.data_usage,
           progress: 0.2,
-          topics: ["Introduction to computer ", "Component of computer ", "MicroProcessor", "Storage Device"],
+          topics: [
+            "Introduction to computer ",
+            "Component of computer ",
+            "MicroProcessor",
+            "Storage Device"
+          ],
         ),
         JobReadyModule(
           title: "Module 2: Computer Fundamental",
           description: "Master in computer fundamental ",
           icon: Icons.bar_chart,
           progress: 0.1,
-          topics: ["Introduction to Programming language", "Graphs", "Dashboards", "Tools"],
+          topics: [
+            "Introduction to Programming language",
+            "Graphs",
+            "Dashboards",
+            "Tools"
+          ],
         ),
       ],
     ),
@@ -99,7 +109,12 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
           description: "Learn the basics of data analysis",
           icon: Icons.data_usage,
           progress: 0.2,
-          topics: ["Data Types", "Data Collection", "Data Cleaning", "Basic Statistics"],
+          topics: [
+            "Data Types",
+            "Data Collection",
+            "Data Cleaning",
+            "Basic Statistics"
+          ],
         ),
         JobReadyModule(
           title: "Module 2: Visualization",
@@ -128,7 +143,12 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
           description: "Introduction to ML algorithms",
           icon: Icons.model_training,
           progress: 0.1,
-          topics: ["Regression", "Classification", "Clustering", "Neural Networks"],
+          topics: [
+            "Regression",
+            "Classification",
+            "Clustering",
+            "Neural Networks"
+          ],
         ),
       ],
     ),
@@ -150,7 +170,12 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
           description: "Craft effective prompts for AI systems",
           icon: Icons.text_fields,
           progress: 0.0,
-          topics: ["Prompt Structures", "Examples", "Best Practices", "Advanced Techniques"],
+          topics: [
+            "Prompt Structures",
+            "Examples",
+            "Best Practices",
+            "Advanced Techniques"
+          ],
         ),
       ],
     ),
@@ -165,7 +190,12 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
           description: "Introduction to cloud computing",
           icon: Icons.cloud_queue,
           progress: 0.6,
-          topics: ["Cloud Providers", "Services", "Deployment Models", "Security"],
+          topics: [
+            "Cloud Providers",
+            "Services",
+            "Deployment Models",
+            "Security"
+          ],
         ),
         JobReadyModule(
           title: "Module 2: DevOps",
@@ -181,11 +211,15 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
   // Sample data for Programming courses
   final List<ProgrammingCourse> programmingCourses = [
     ProgrammingCourse(name: "C", icon: Icons.settings, color: Colors.blue),
-    ProgrammingCourse(name: "C++", icon: Icons.settings_applications, color: Colors.purple),
+    ProgrammingCourse(
+        name: "C++", icon: Icons.settings_applications, color: Colors.purple),
     ProgrammingCourse(name: "Java", icon: Icons.coffee, color: Colors.orange),
-    ProgrammingCourse(name: "Python", icon: Icons.auto_awesome, color: Colors.green),
-    ProgrammingCourse(name: "JavaScript", icon: Icons.web, color: Colors.yellow.shade700),
-    ProgrammingCourse(name: "Dart", icon: Icons.mobile_friendly, color: Colors.blue.shade300),
+    ProgrammingCourse(
+        name: "Python", icon: Icons.auto_awesome, color: Colors.green),
+    ProgrammingCourse(
+        name: "JavaScript", icon: Icons.web, color: Colors.yellow.shade700),
+    ProgrammingCourse(
+        name: "Dart", icon: Icons.mobile_friendly, color: Colors.blue.shade300),
   ];
 
   @override
@@ -258,12 +292,10 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
                   opacity: _fadeAnimation,
                   child: Transform.translate(
                     offset: Offset(0, _slideAnimation.value),
-                   // child: _buildJobReadyCard(),
+                    // child: _buildJobReadyCard(),
                   ),
                 ),
                 SizedBox(height: 0),
-
-
 
 // Slider card using padding
 
@@ -318,9 +350,9 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
                   ],
                 ),
 
-
-
-                SizedBox(height: 24,),
+                SizedBox(
+                  height: 24,
+                ),
                 // Job Ready Courses Section Title
                 FadeTransition(
                   opacity: _fadeAnimation,
@@ -340,8 +372,8 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
                     child: Text(
                       'Choose your career path and become industry-ready',
                       style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
+                            color: Colors.grey.shade600,
+                          ),
                     ),
                   ),
                 ),
@@ -370,8 +402,8 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
                     child: Text(
                       'Explore language-specific courses',
                       style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
+                            color: Colors.grey.shade600,
+                          ),
                     ),
                   ),
                 ),
@@ -386,61 +418,62 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
       ),
 
       // Chat with AI Floating Button
-        floatingActionButton: Container(
-          height: 56,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.purpleAccent.shade400,
-                Colors.lightBlue,
-
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
+      floatingActionButton: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.purpleAccent.shade400,
+              Colors.lightBlue,
             ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          child: Material(
-            color: Colors.transparent,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(28),
+          child: InkWell(
             borderRadius: BorderRadius.circular(28),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(28),
-              onTap: () {
-                // show teh Ai dialog
-                _showChatDialog(context);
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.chat, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text(
-                      'Chat with AI',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+            onTap: () {
+              // .
+              // show teh Ai dialog
+              //Navigator.push(context, MaterialPageRoute(builder: (_) => AIChatScreen(userId: currentUserId)));
+              Navigator.push(
+                  context, MaterialPageRoute(builder: (_) => ChatScreen()));
+              // Navigator.push(context, MaterialPageRoute(builder: (_) => AIChatScreen(userId: "<USER_ID>")));
+              //_showChatDialog(context);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.chat, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text(
+                    'Chat with AI',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
-
-
-
+      ),
     );
-   }
+  }
 
   // This is an teh job ready widget
   Widget _buildJobReadyCard() {
@@ -515,7 +548,6 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
       ),
     );
   }
-
 
   // Build the list of Job Ready courses
   Widget _buildJobReadyCoursesList() {
@@ -600,9 +632,6 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
                   // ),
 
                   child: Center(
-
-
-
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -638,7 +667,6 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
                         ],
                       ),
                     ),
-
                   ),
                 ),
               ),
@@ -655,10 +683,6 @@ class _StudyScreenState extends State<StudyScreen> with SingleTickerProviderStat
       },
     );
   }
-
-
-
-
 }
 
 // Job Ready Course Card Widget
@@ -730,7 +754,8 @@ class JobReadyCourseCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 4),
-                      Icon(Icons.arrow_forward, size: 12, color: Colors.grey.shade600),
+                      Icon(Icons.arrow_forward,
+                          size: 12, color: Colors.grey.shade600),
                     ],
                   ),
                 ],
@@ -766,10 +791,11 @@ class JobReadyCourseCard extends StatelessWidget {
 class ProgrammingCourseCard extends StatelessWidget {
   final ProgrammingCourse course;
 
-  const ProgrammingCourseCard({Key? key, required this.course}) : super(key: key);
+  const ProgrammingCourseCard({Key? key, required this.course})
+      : super(key: key);
 
   // desining the screen size , it invike teh screen size as per screen width and height
-  double getResponsiveFontSize(BuildContext context, double baseSize){
+  double getResponsiveFontSize(BuildContext context, double baseSize) {
     double screenWidth = MediaQuery.of(context).size.width;
     return screenWidth / 375 * baseSize;
   }
@@ -813,13 +839,15 @@ class ProgrammingCourseCard extends StatelessWidget {
                       // fontSize: 10, // this is the first way that we can define teh screen size fixed
                       // fontSize:  getResponsiveFontSize(context, 10), // this is teh second way that we can define teh a retunabel function an dus eteh screen size
 
-                      fontSize: screenWidth * 0.027, // this is teh third way that we can use the responsive screen size
+                      fontSize: screenWidth *
+                          0.027, // this is teh third way that we can use the responsive screen size
 
                       color: Colors.grey.shade600,
                     ),
                   ),
                   SizedBox(width: 4),
-                  Icon(Icons.arrow_forward, size: 12, color: Colors.grey.shade600),
+                  Icon(Icons.arrow_forward,
+                      size: 12, color: Colors.grey.shade600),
                 ],
               ),
             ],
@@ -1021,7 +1049,8 @@ class ModuleDetailScreen extends StatelessWidget {
                       color: Colors.blue.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.play_circle_outline, size: 16, color: Colors.blue),
+                    child: Icon(Icons.play_circle_outline,
+                        size: 16, color: Colors.blue),
                   ),
                   title: Text(module.topics[index]),
                   trailing: Icon(Icons.arrow_forward_ios, size: 16),
