@@ -31,9 +31,7 @@ migrate_working_dir/
 .pub/
 /build/
 /realeye_backend/.env
-venv/
-__pycache__/
-.env
+
 
 
 # Symbolication related
