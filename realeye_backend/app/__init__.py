@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 
 def create_app():
@@ -8,5 +8,17 @@ def create_app():
     # Import routes
     from app.routes.image_routes import image_bp
     app.register_blueprint(image_bp, url_prefix='/api')
+
+    # Ai chat route
+    from app.routes.chat_routes import chat_bp
+    app.register_blueprint(chat_bp, url_prefix='/api/chat')
+    
+    @app.route('/')
+    def home():
+        return jsonify({
+            "status": "success",
+            "message": "Realeye Flask Backend is running successfully!",
+            "routes": ["/api/chat/send", "/api/chat/history"]
+        })
 
     return app

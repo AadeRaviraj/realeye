@@ -3,3 +3,6 @@ flask-cors
 cloudinary
 python-dotenv
 gunicorn
+astrapy
+requests 
+
