@@ -16,7 +16,7 @@ class Config:
     
     
     HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
-    HF_MODEL = os.getenv("HF_MODEL", "mrm8488/t5-base-finetuned-conversational")
+    HF_MODEL = os.getenv("HF_MODEL", "microsoft/DialoGPT-small")
 
 # Optional aliases for old references
 # ASTRA_DB_TOKEN = Config.ASTRA_DB_APPLICATION_TOKEN
