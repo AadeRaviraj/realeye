@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/foundation.dart';
-import 'ai_chat_screen.dart';
+import 'package:realeyes/ai_chat/ai_chat_screen.dart';
 import 'package:realeyes/ai_chat/chat_screen.dart';
+import 'package:realeyes/ai_chat/chat_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
 
 // Data models
 class JobReadyCourse {
@@ -54,8 +58,14 @@ class ProgrammingCourse {
 
 // Main Study Screen
 class StudyScreen extends StatefulWidget {
+  final String currentUserId;
+
+  const StudyScreen({Key? key, required this.currentUserId}) : super(key: key);
+
+
   @override
   _StudyScreenState createState() => _StudyScreenState();
+
 }
 
 class _StudyScreenState extends State<StudyScreen>
@@ -63,6 +73,7 @@ class _StudyScreenState extends State<StudyScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _slideAnimation;
+
 
   // Sample data for Job Ready courses
   final List<JobReadyCourse> jobReadyCourses = [
@@ -222,9 +233,13 @@ class _StudyScreenState extends State<StudyScreen>
         name: "Dart", icon: Icons.mobile_friendly, color: Colors.blue.shade300),
   ];
 
+
+
   @override
   void initState() {
     super.initState();
+
+   // final String currentUserId;
 
     // Initialize animation controller
     _animationController = AnimationController(
@@ -446,9 +461,22 @@ class _StudyScreenState extends State<StudyScreen>
             onTap: () {
               // .
               // show teh Ai dialog
-              //Navigator.push(context, MaterialPageRoute(builder: (_) => AIChatScreen(userId: currentUserId)));
-              Navigator.push(
-                  context, MaterialPageRoute(builder: (_) => ChatScreen()));
+              // Navigator.push(
+              //     context,
+              //     MaterialPageRoute(
+              //     builder: (_) => AIChatScreen(userId: "someUserId"),
+              // ),
+              // );.
+
+              // Navigator.push(
+              //     context, MaterialPageRoute(builder: (_) => ChatScreen())
+              // );
+
+              final FirebaseAuth _auth = FirebaseAuth.instance;
+              final String currentUserId = _auth.currentUser!.uid;
+
+              Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(userId: currentUserId, apiBase: "http://10.0.2.2:5000")));
+
               // Navigator.push(context, MaterialPageRoute(builder: (_) => AIChatScreen(userId: "<USER_ID>")));
               //_showChatDialog(context);
             },

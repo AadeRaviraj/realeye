@@ -164,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final List<Widget> screens = [
       _buildMainScreen(),
-      StudyScreen(),
+      StudyScreen( currentUserId: '',),
       InterviewPrepScreen(),
       ProfileScreen(),
     ];

@@ -1,9 +1,23 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  //final String userId;
+  // final String apiBase; // pass API base URL (use Render URL in production)
+  // final String currentUserId;
+  //
+  //
+  // const ChatScreen({Key? key, required this.currentUserId, required this.apiBase}) : super(key: key);
+
+  final String userId;
+  final String apiBase;
+
+  const ChatScreen({
+    Key? key,
+    required this.userId,
+    required this.apiBase,
+  }) : super(key: key);
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -11,100 +25,93 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
-  final List<Map<String, dynamic>> _messages = [];
-  final String userId = "ravi123";
+  final ScrollController _scrollController = ScrollController();
+  List<Map<String, dynamic>> _messages = [];
+  bool isLoading = false;
 
-  Future<void> sendMessage(String message) async {
-    if (message.trim().isEmpty) return;
-
+  Future<void> sendMessage(String text) async {
+    if (text.trim().isEmpty) return;
     setState(() {
-      _messages.add({"sender": "user", "text": message});
+      _messages.add({"sender":"user","text":text});
       _controller.clear();
+      isLoading = true;
     });
+    _scrollToBottom();
 
-    // final response = await http.post(
-    //   Uri.parse("http://127.0.0.1:5000/api/chat"), // local backend URL
-    //   headers: {"Content-Type": "application/json"},
-    //   body: jsonEncode({"user_id": userId, "message": message}),
-    // );
-
-    // if (response.statusCode == 200) {
-    //   final data = jsonDecode(response.body);
-    //   setState(() {
-    //     _messages.add({"sender": "ai", "text": data["reply"]});
-    //   });
-    // }
-
-    final String apiUrl = "http://10.0.2.2:5000/api/chat/send";
-
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"user_id": userId, "message": message}),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      setState(() {
-        _messages.add({
-          "sender": "ai",
-          "text": data["reply"] ?? data["ai_response"] ?? "No reply"
+    final uri = Uri.parse("${widget.apiBase}/api/chat/send");
+    try {
+      final res = await http.post(uri,
+        headers: {"Content-Type":"application/json"},
+        body: jsonEncode({"user_id": widget.userId, "message": text}),
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final reply = data["reply"] ?? "No reply";
+        setState(() {
+          _messages.add({"sender":"ai","text":reply});
         });
-      });
-    } else {
+      } else {
+        setState(() {
+          _messages.add({"sender":"ai","text":"Server error ${res.statusCode}"});
+        });
+      }
+    } catch (e) {
       setState(() {
-        _messages.add({"sender": "ai", "text": "Error: failed to get reply"});
+        _messages.add({"sender":"ai","text":"Error: $e"});
       });
+    } finally {
+      setState(() => isLoading = false);
+      _scrollToBottom();
     }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(_scrollController.position.maxScrollExtent,
+            duration: Duration(milliseconds: 200), curve: Curves.easeOut);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Realeye AI Chat")),
+      appBar: AppBar(title: Text("Realeye AI Chat")),
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
+              controller: _scrollController,
               itemCount: _messages.length,
               itemBuilder: (context, index) {
-                final msg = _messages[index];
-                bool isUser = msg["sender"] == "user";
+                final m = _messages[index];
+                final isUser = m["sender"] == "user";
                 return Align(
-                  alignment:
-                      isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
-                    margin: const EdgeInsets.all(8),
-                    padding: const EdgeInsets.all(12),
+                    margin: EdgeInsets.all(8),
+                    padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isUser ? Colors.blue[100] : Colors.grey[300],
+                      color: isUser ? Colors.blueAccent.withOpacity(0.8) : Colors.grey[200],
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(msg["text"]),
+                    child: Text(m["text"], style: TextStyle(color: isUser ? Colors.white : Colors.black87)),
                   ),
                 );
               },
             ),
           ),
+          if (isLoading)
+            Padding(padding: EdgeInsets.all(8), child: Row(children: [CircularProgressIndicator(), SizedBox(width:8), Text("AI is typing...")])),
           Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      hintText: "Type your message...",
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: () => sendMessage(_controller.text),
-                ),
-              ],
-            ),
+            padding: EdgeInsets.all(8),
+            child: Row(children: [
+              Expanded(
+                child: TextField(controller: _controller, decoration: InputDecoration(hintText: "Ask Realeye...")),
+              ),
+              IconButton(icon: Icon(Icons.send), onPressed: () => sendMessage(_controller.text)),
+            ]),
           ),
         ],
       ),
