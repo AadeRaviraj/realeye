@@ -58,9 +58,7 @@ class ProgrammingCourse {
 
 // Main Study Screen
 class StudyScreen extends StatefulWidget {
-  final String currentUserId;
 
-  const StudyScreen({Key? key, required this.currentUserId}) : super(key: key);
 
 
   @override
@@ -475,7 +473,7 @@ class _StudyScreenState extends State<StudyScreen>
               final FirebaseAuth _auth = FirebaseAuth.instance;
               final String currentUserId = _auth.currentUser!.uid;
 
-              Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(userId: currentUserId, apiBase: "http://10.0.2.2:5000")));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(userId: currentUserId, apiBase: "https://realeye.onrender.com")));
 
               // Navigator.push(context, MaterialPageRoute(builder: (_) => AIChatScreen(userId: "<USER_ID>")));
               //_showChatDialog(context);

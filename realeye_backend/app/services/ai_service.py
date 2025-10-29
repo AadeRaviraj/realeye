@@ -12,7 +12,15 @@ client = DataAPIClient(Config.ASTRA_DB_APPLICATION_TOKEN)
 db = client.get_database_by_api_endpoint(Config.ASTRA_DB_API_ENDPOINT)
 
 # get (or create implicitly) a collection named chat_history
-chat_collection = db.get_collection("chat_history")
+# chat_collection = db.get_collection("chat_history")
+collection_name = "chat_history"
+
+try:
+    chat_collection = db.get_collection(collection_name)
+except Exception as e:
+    print(f"Collection '{collection_name}' not found. Creating it now...")
+    db.create_collection(collection_name)
+    chat_collection = db.get_collection(collection_name)
 
 def save_message(user_id, message, sender):
     if user_id is None:
