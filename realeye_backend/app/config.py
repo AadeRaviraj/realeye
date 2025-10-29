@@ -16,7 +16,7 @@ class Config:
     
     
     HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
-    HF_MODEL = os.getenv("HF_MODEL", "microsoft/DialoGPT-medium")
+    HF_MODEL = os.getenv("HF_MODEL", "facebook/blenderbot-400M-distill")
 
 # Optional aliases for old references
 # ASTRA_DB_TOKEN = Config.ASTRA_DB_APPLICATION_TOKEN
