@@ -16,5 +16,5 @@ class Config:
     
     
     HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
-    HF_MODEL = os.getenv("HF_MODEL", "microsoft/DialoGPT-medium")
+    HF_MODEL = os.getenv("HF_MODEL", "google/flan-t5-large")
 

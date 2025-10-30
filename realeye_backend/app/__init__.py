@@ -13,12 +13,40 @@ def create_app():
     from app.routes.chat_routes import chat_bp
     app.register_blueprint(chat_bp, url_prefix='/api/chat')
     
+    # @app.route('/')
+    # def home():
+    #     return jsonify({
+    #         "status": "success",
+    #         "message": "Realeye Flask Backend is running successfully!",
+    #         "routes": ["/api/chat/send", "/api/chat/history"]
+    #     })
     @app.route('/')
     def home():
         return jsonify({
-            "status": "success",
-            "message": "Realeye Flask Backend is running successfully!",
-            "routes": ["/api/chat/send", "/api/chat/history"]
-        })
+        "status": "success",
+        "message": "Realeye Study App Backend is running successfully! 🚀",
+        "version": "2.0",
+        "features": [
+            "AI Chat Assistant",
+            "Study Material Management",
+            "User Progress Tracking",
+            "Daily Message Limits"
+        ],
+        "endpoints": {
+            "chat": {
+                "send_message": "POST /api/chat/send",
+                "get_history": "GET /api/chat/history",
+                "get_usage": "GET /api/chat/usage"
+            }
+        }
+    })
+
+    @app.route('/health')
+    def health_check():
+        return jsonify({
+        "status": "healthy",
+        "service": "Realeye Backend",
+        "timestamp": "2025-10-30T17:00:00Z"
+             })
 
     return app

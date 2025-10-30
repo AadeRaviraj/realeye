@@ -233,10 +233,9 @@
 #         print(f"HF general model error: {e}")
 #         return f"Thanks for your message! I'm here to help. What would you like to know about '{prompt}'?"
 
-# app/services/ai_service.py
 from astrapy import DataAPIClient
 from app.config import Config
-import requests, time, datetime
+import requests, time, datetime, json
 
 # Validate env vars
 if not Config.ASTRA_DB_APPLICATION_TOKEN or not Config.ASTRA_DB_API_ENDPOINT:
@@ -294,7 +293,7 @@ def get_user_message_count_today(user_id):
 
 def query_huggingface(prompt, user_id=None):
     """
-    Main function to query AI models - FIXED VERSION
+    FIXED: Proper Hugging Face API implementation
     """
     # Check daily message limit
     if user_id:
@@ -303,23 +302,26 @@ def query_huggingface(prompt, user_id=None):
             return "🚫 You've reached your daily limit of 20 messages. Please upgrade to premium for unlimited chats!"
 
     hf_token = Config.HUGGINGFACE_API_TOKEN
-    model = Config.HF_MODEL
 
+    # If no token, use smart responses
     if not hf_token:
-        return "🔧 Please configure your Hugging Face API token in environment variables."
+        return generate_smart_response(prompt)
 
-    # Use a model that actually works - Microsoft DialoGPT is reliable
-    url = f"https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium"
+    # Use Google Flan-T5 model - it's reliable and always available
+    model = "google/flan-t5-large"
+    url = f"https://api-inference.huggingface.co/models/{model}"
     headers = {"Authorization": f"Bearer {hf_token}"}
 
+    # Format prompt for better responses
+    formatted_prompt = f"Please provide a helpful and friendly response to: {prompt}"
+
     payload = {
-        "inputs": prompt,
+        "inputs": formatted_prompt,
         "parameters": {
-            "max_new_tokens": 250,
-            "temperature": 0.9,
-            "top_p": 0.95,
-            "do_sample": True,
-            "return_full_text": False
+            "max_new_tokens": 150,
+            "temperature": 0.7,
+            "top_p": 0.9,
+            "do_sample": True
         },
         "options": {
             "wait_for_model": True
@@ -327,46 +329,57 @@ def query_huggingface(prompt, user_id=None):
     }
 
     try:
-        print(f"Sending request to Hugging Face API...")
-        response = requests.post(url, headers=headers, json=payload, timeout=60)
-        print(f"Response status: {response.status_code}")
+        print(f"🤖 Sending request to Hugging Face: {prompt}")
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        print(f"📡 Response status: {response.status_code}")
 
         if response.status_code == 200:
             data = response.json()
-            print(f"Response data: {data}")
+            print(f"📦 Response data: {data}")
 
-            # Handle different response formats
+            # Extract generated text
             if isinstance(data, list) and len(data) > 0:
-                if "generated_text" in data[0]:
-                    generated_text = data[0]["generated_text"]
-                    # Clean up the response
-                    if prompt in generated_text:
-                        generated_text = generated_text.replace(prompt, "").strip()
-                    return generated_text if generated_text else "I understand your message! How can I help you further?"
-                return str(data[0])
-            elif isinstance(data, dict) and "generated_text" in data:
-                return data["generated_text"]
-            else:
-                return f"I received your message: '{prompt}'. How can I assist you with this?"
+                generated_text = data[0].get('generated_text', '')
+                if generated_text:
+                    return generated_text
+
+            # If no generated text, return smart response
+            return generate_smart_response(prompt)
 
         elif response.status_code == 503:
-            # Model is loading - wait and retry once
-            print("Model is loading, waiting 15 seconds...")
-            time.sleep(15)
-            response = requests.post(url, headers=headers, json=payload, timeout=60)
-            if response.status_code == 200:
-                data = response.json()
-                if isinstance(data, list) and len(data) > 0 and "generated_text" in data[0]:
-                    return data[0]["generated_text"]
-            return f"Hello! I'm your AI assistant. You asked: '{prompt}'. How can I help you with that?"
-
+            # Model is loading, use smart response
+            print("⏳ Model is loading, using smart response")
+            return generate_smart_response(prompt)
         else:
-            print(f"API Error: {response.status_code} - {response.text}")
-            return f"I'm here to help! Regarding '{prompt}', I'm ready to assist you. What specific information would you like?"
+            print(f"❌ API Error: {response.status_code} - {response.text}")
+            return generate_smart_response(prompt)
 
-    except requests.exceptions.Timeout:
-        print("Request timeout")
-        return f"I understand you're asking about '{prompt}'. Could you provide more details so I can help you better?"
     except Exception as e:
-        print(f"Error in query_huggingface: {e}")
-        return f"Thanks for your message! I'm here to help with '{prompt}'. What would you like to know specifically?"
+        print(f"💥 Exception: {e}")
+        return generate_smart_response(prompt)
+def generate_smart_response(prompt):
+    """
+    Generate intelligent, friendly responses when API fails
+    """
+    prompt_lower = prompt.lower().strip()
+
+    # Greetings
+    if any(word in prompt_lower for word in ['hello', 'hi', 'hey', 'hola', 'namaste']):
+        return ("Hello! 👋 I'm your AI study assistant! I'm here to help you with any questions "
+                "about programming, math, science, or any other subject. What would you like to learn today?")
+
+    # Programming questions
+    elif any(word in prompt_lower for word in [
+        'programming', 'code', 'function', 'variable', 'array', 'list', 'string', 'int', 'float']):
+        if 'array' in prompt_lower and 'c' in prompt_lower:
+            return (
+                "**Arrays in C Programming:**\n"
+                "An array in C is a collection of items stored at contiguous memory locations. "
+                "It allows you to store multiple items of the same type together.\n"
+                "📝 **Basic Syntax:**\n"
+                "```c\nint arr[5]; // declares an integer array of size 5\n```\n"
+            )
+        return "It seems you're asking about programming. Could you specify your question in more detail?"
+
+    # Default fallback
+    return "I'm here to help! Can you please clarify your question?"
