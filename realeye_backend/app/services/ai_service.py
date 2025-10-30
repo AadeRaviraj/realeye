@@ -232,11 +232,10 @@
 #     except Exception as e:
 #         print(f"HF general model error: {e}")
 #         return f"Thanks for your message! I'm here to help. What would you like to know about '{prompt}'?"
-
 # app/services/ai_service.py
 from astrapy import DataAPIClient
 from app.config import Config
-import requests, time, datetime
+import requests, time, datetime, json
 
 # Validate env vars
 if not Config.ASTRA_DB_APPLICATION_TOKEN or not Config.ASTRA_DB_API_ENDPOINT:
@@ -292,144 +291,168 @@ def get_user_message_count_today(user_id):
 
     return len(list(cursor))
 
-# SIMPLE AND RELIABLE HUGGING FACE QUERY
-def query_huggingface(prompt, user_id=None):
-    hf_token = Config.HUGGINGFACE_API_TOKEN
-
+def query_ai_model(prompt, user_id=None):
+    """
+    Main function to query AI models
+    Priority: OpenRouter Free -> Hugging Face -> Fallback
+    """
     # Check daily message limit
     if user_id:
         message_count = get_user_message_count_today(user_id)
         if message_count >= 20:
             return "🚫 You've reached your daily limit of 20 messages. Please upgrade to premium for unlimited chats!"
 
-    # If no API token, use a smart fallback
-    if not hf_token:
-        return generate_smart_response(prompt)
+    # Try OpenRouter first (most reliable free option)
+    response = try_openrouter(prompt)
+    if response and response != "ERROR":
+        return response
 
-    # Try multiple free models that work reliably
-    models_to_try = [
-        "microsoft/DialoGPT-medium",
-        "microsoft/DialoGPT-large",
-        "facebook/blenderbot-400M-distill",
-        "HuggingFaceH4/zephyr-7b-beta",
-        "google/flan-t5-large"
-    ]
+    # Try Hugging Face as backup
+    response = try_huggingface(prompt)
+    if response and response != "ERROR":
+        return response
 
-    for model in models_to_try:
-        try:
-            response = try_huggingface_model(prompt, model, hf_token)
-            if response and response != "ERROR":
-                return response
-        except Exception as e:
-            print(f"Model {model} failed: {e}")
-            continue
+    # Final fallback - smart response
+    return generate_ai_response(prompt)
 
-    # If all models fail, use smart response
-    return generate_smart_response(prompt)
+def try_openrouter(prompt):
+    """
+    Use OpenRouter free models - much more reliable than Hugging Face
+    """
+    try:
+        # Free models available on OpenRouter
+        models = [
+            "google/gemma-2b-it:free",  # Google's Gemma 2B - excellent for chat
+            "mistralai/mistral-7b-instruct:free",  # Mistral 7B - very powerful
+            "huggingfaceh4/zephyr-7b-beta:free"  # Zephyr 7B - chat optimized
+        ]
 
-def try_huggingface_model(prompt, model, hf_token):
-    """Try a specific Hugging Face model"""
-    url = f"https://api-inference.huggingface.co/models/{model}"
-    headers = {"Authorization": f"Bearer {hf_token}"}
-
-    # Different payloads for different model types
-    if "dialogpt" in model.lower():
-        payload = {
-            "inputs": prompt,
-            "parameters": {
-                "max_length": 200,
-                "temperature": 0.9,
-                "do_sample": True
-            },
-            "options": {
-                "wait_for_model": True
+        for model in models:
+            url = "https://openrouter.ai/api/v1/chat/completions"
+            headers = {
+                "Content-Type": "application/json",
             }
-        }
-    elif "blenderbot" in model.lower():
-        payload = {
-            "inputs": prompt,
-            "parameters": {
-                "max_length": 150,
+
+            payload = {
+                "model": model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a helpful AI assistant that provides accurate, detailed, and friendly responses to any question. You excel at programming help, general knowledge, creative writing, and problem-solving."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "max_tokens": 500,
                 "temperature": 0.7
             }
-        }
-    else:
-        # General text generation
-        payload = {
-            "inputs": prompt,
-            "parameters": {
-                "max_new_tokens": 150,
-                "temperature": 0.7,
-                "top_p": 0.9,
-                "do_sample": True
-            },
-            "options": {
-                "wait_for_model": True
-            }
-        }
 
-    try:
-        response = requests.post(url, headers=headers, json=payload, timeout=45)
+            response = requests.post(url, headers=headers, json=payload, timeout=30)
 
-        if response.status_code == 200:
-            data = response.json()
-
-            # Handle different response formats
-            if isinstance(data, list):
-                if len(data) > 0:
-                    if "generated_text" in data[0]:
-                        return data[0]["generated_text"]
-                    return str(data[0])
-            elif isinstance(data, dict):
-                if "generated_text" in data:
-                    return data["generated_text"]
-                if "conversation" in data and "generated_responses" in data["conversation"]:
-                    return data["conversation"]["generated_responses"][0]
-
-            return "ERROR"
-
-        elif response.status_code == 503:
-            # Model is loading, wait longer
-            print(f"Model {model} is loading, waiting...")
-            time.sleep(15)
-            response = requests.post(url, headers=headers, json=payload, timeout=45)
             if response.status_code == 200:
                 data = response.json()
-                if isinstance(data, list) and len(data) > 0 and "generated_text" in data[0]:
-                    return data[0]["generated_text"]
-
-        return "ERROR"
+                if 'choices' in data and len(data['choices']) > 0:
+                    return data['choices'][0]['message']['content'].strip()
+            elif response.status_code == 402:
+                # Free quota exceeded, try next model
+                continue
 
     except Exception as e:
-        print(f"Error with model {model}: {e}")
+        print(f"OpenRouter error: {e}")
+
+    return "ERROR"
+
+def try_huggingface(prompt):
+    """
+    Try Hugging Face models as backup
+    """
+    hf_token = Config.HUGGINGFACE_API_TOKEN
+
+    if not hf_token:
         return "ERROR"
 
-def generate_smart_response(prompt):
-    """Generate a smart response when API fails"""
+    # Try multiple Hugging Face models
+    models = [
+        "microsoft/DialoGPT-large",
+        "microsoft/DialoGPT-medium",
+        "facebook/blenderbot-400M-distill",
+        "google/flan-t5-xxl"
+    ]
+
+    for model in models:
+        try:
+            url = f"https://api-inference.huggingface.co/models/{model}"
+            headers = {"Authorization": f"Bearer {hf_token}"}
+
+            payload = {
+                "inputs": prompt,
+                "parameters": {
+                    "max_new_tokens": 300,
+                    "temperature": 0.7,
+                    "top_p": 0.9,
+                    "do_sample": True,
+                    "return_full_text": False
+                },
+                "options": {
+                    "wait_for_model": True
+                }
+            }
+
+            response = requests.post(url, headers=headers, json=payload, timeout=45)
+
+            if response.status_code == 200:
+                data = response.json()
+                # Parse different response formats
+                if isinstance(data, list) and len(data) > 0:
+                    if "generated_text" in data[0]:
+                        text = data[0]["generated_text"]
+                        # Remove the original prompt if it's included
+                        if prompt in text:
+                            text = text.replace(prompt, "").strip()
+                        return text
+                    return str(data[0])
+                elif isinstance(data, dict) and "generated_text" in data:
+                    return data["generated_text"]
+
+            elif response.status_code == 503:
+                # Model loading, wait and continue to next
+                time.sleep(5)
+                continue
+
+        except Exception as e:
+            print(f"Hugging Face model {model} error: {e}")
+            continue
+
+    return "ERROR"
+
+def generate_ai_response(prompt):
+    """
+    Smart fallback responses when APIs fail
+    """
     prompt_lower = prompt.lower()
 
-    # Greeting responses
-    if any(word in prompt_lower for word in ['hello', 'hi', 'hey', 'hola']):
-        return "Hello! 👋 I'm your AI assistant. How can I help you today?"
+    # Programming questions
+    if any(word in prompt_lower for word in ['programming', 'code', 'function', 'variable', 'array', 'list', 'string', 'int', 'float', 'java', 'python', 'c++', 'javascript', 'react', 'flutter', 'dart']):
+        if 'array' in prompt_lower and 'c' in prompt_lower:
+            return """In C programming, an array is a collection of items stored at contiguous memory locations that allows storing multiple items of the same type together.
 
-    # Question responses
-    elif '?' in prompt or any(word in prompt_lower for word in ['what', 'how', 'why', 'when', 'where']):
-        if 'array' in prompt_lower and 'c ' in prompt_lower:
-            return "In C programming, an array is a collection of items stored at contiguous memory locations. It allows storing multiple items of the same type together.\n\nExample:\n```c\nint numbers[5] = {1, 2, 3, 4, 5};\n```\nArrays in C are fixed-size and zero-indexed. The first element is at index 0. Would you like me to explain more about arrays?"
+**Key Points:**
+- Arrays have fixed size
+- Zero-indexed (first element at index 0)
+- All elements are of the same type
 
-        elif 'programming' in prompt_lower:
-            return "I'd be happy to help with programming questions! Could you specify which language or concept you're interested in? 🚀"
+**Example:**
+```c
+#include <stdio.h>
 
-        else:
-            return "That's an interesting question! I'm here to help you learn and explore various topics. Could you provide more details?"
-
-    # Default engaging response
-    else:
-        responses = [
-            f"I understand you're saying: '{prompt}'. That's interesting! What would you like to know more about?",
-            f"Thanks for sharing: '{prompt}'. How can I assist you with this?",
-            f"Got it! Regarding '{prompt}', I'm here to help. What specific information are you looking for?",
-            f"I see you mentioned: '{prompt}'. That's a great topic! How can I help you explore this further?"
-        ]
-        import random
-        return random.choice(responses)
+int main() {
+    int numbers[5] = {1, 2, 3, 4, 5};  // Declaration & initialization
+    
+    // Accessing elements
+    printf("First element: %d\\n", numbers[0]);  // Output: 1
+    printf("Third element: %d\\n", numbers[2]);  // Output: 3
+    
+    return 0;
+}"""
