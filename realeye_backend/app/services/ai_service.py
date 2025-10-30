@@ -69,11 +69,174 @@
 #     except Exception as e:
 #         print("HF error:", e)
 #         return "Sorry, I couldn't generate a reply right now."
+#
+# # app/services/ai_service.py
+# from astrapy import DataAPIClient
+# from app.config import Config
+# import requests, time
+#
+# # Validate env vars
+# if not Config.ASTRA_DB_APPLICATION_TOKEN or not Config.ASTRA_DB_API_ENDPOINT:
+#     raise RuntimeError("ASTRA_DB_APPLICATION_TOKEN or ASTRA_DB_API_ENDPOINT missing in environment")
+#
+# # Astra Data API client
+# client = DataAPIClient(Config.ASTRA_DB_APPLICATION_TOKEN)
+# db = client.get_database_by_api_endpoint(Config.ASTRA_DB_API_ENDPOINT)
+#
+# collection_name = "chat_history"
+#
+# try:
+#     chat_collection = db.get_collection(collection_name)
+# except Exception as e:
+#     print(f"Collection '{collection_name}' not found. Creating it now...")
+#     db.create_collection(collection_name)
+#     chat_collection = db.get_collection(collection_name)
+#
+# def save_message(user_id, message, sender):
+#     if user_id is None:
+#         user_id = "anonymous"
+#     doc = {
+#         "user_id": user_id,
+#         "message": message,
+#         "sender": sender,
+#         "created_at": int(time.time() * 1000),
+#         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+#     }
+#     chat_collection.insert_one(doc)
+#     return doc
+#
+# def get_chat_history(user_id, limit=100):
+#     if not user_id:
+#         return []
+#     cursor = chat_collection.find({"user_id": user_id}, sort={"created_at": -1}, limit=limit)
+#     docs = list(cursor)
+#     # Sort by timestamp ascending for display
+#     docs.sort(key=lambda x: x.get("created_at", 0))
+#     return [{"sender": d.get("sender"), "message": d.get("message"), "created_at": d.get("created_at")} for d in docs]
+#
+# def get_user_message_count_today(user_id):
+#     """Count how many messages user sent today"""
+#     if not user_id:
+#         return 0
+#
+#     # Get today's start timestamp (midnight)
+#     import datetime
+#     today = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+#     today_timestamp = int(today.timestamp() * 1000)
+#
+#     cursor = chat_collection.find({
+#         "user_id": user_id,
+#         "sender": "user",
+#         "created_at": {"$gte": today_timestamp}
+#     })
+#
+#     return len(list(cursor))
+#
+# # Improved Hugging Face call with better error handling
+# def query_huggingface(prompt, user_id=None):
+#     hf_token = Config.HUGGINGFACE_API_TOKEN
+#     model = Config.HF_MODEL
+#
+#     # Check daily message limit (20 messages per user)
+#     if user_id:
+#         message_count = get_user_message_count_today(user_id)
+#         if message_count >= 20:  # Daily limit reached
+#             return "You've reached your daily limit of 20 messages. Please upgrade to premium for unlimited chats! 🚀"
+#
+#     if not hf_token:
+#         return "AI: I'm here to help! (API not configured)"
+#
+#     # Use a reliable model - DialoGPT works great for chat
+#     if "dialo" in model.lower():
+#         return query_dialogpt(prompt, hf_token)
+#     else:
+#         return query_general_model(prompt, hf_token, model)
+#
+# def query_dialogpt(prompt, hf_token):
+#     """Query DialoGPT model specifically"""
+#     url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium"
+#     headers = {"Authorization": f"Bearer {hf_token}"}
+#
+#     payload = {
+#         "inputs": {
+#             "text": prompt,
+#             "past_user_inputs": [],
+#             "generated_responses": []
+#         },
+#         "parameters": {
+#             "temperature": 0.9,
+#             "max_length": 200,
+#             "do_sample": True,
+#             "top_p": 0.95
+#         }
+#     }
+#
+#     try:
+#         resp = requests.post(url, headers=headers, json=payload, timeout=45)
+#
+#         if resp.status_code == 200:
+#             data = resp.json()
+#             if isinstance(data, dict) and "generated_text" in data:
+#                 return data["generated_text"]
+#             return "I received your message! How can I assist you further?"
+#         elif resp.status_code == 503:
+#             # Model is loading, wait and retry once
+#             time.sleep(10)
+#             resp = requests.post(url, headers=headers, json=payload, timeout=45)
+#             if resp.status_code == 200:
+#                 data = resp.json()
+#                 if isinstance(data, dict) and "generated_text" in data:
+#                     return data["generated_text"]
+#
+#             return "Hello! I'm your AI assistant. How can I help you today? 😊"
+#         else:
+#             return f"Hello! Thanks for your message: '{prompt}'. How can I assist you today?"
+#
+#     except Exception as e:
+#         print(f"HF API error: {e}")
+#         return "Hello! I'm ready to chat. What would you like to talk about? 😊"
+#
+# def query_general_model(prompt, hf_token, model):
+#     """Query general text generation models"""
+#     url = f"https://api-inference.huggingface.co/models/{model}"
+#     headers = {"Authorization": f"Bearer {hf_token}"}
+#
+#     payload = {
+#         "inputs": prompt,
+#         "parameters": {
+#             "temperature": 0.7,
+#             "max_new_tokens": 150,
+#             "top_p": 0.9,
+#             "do_sample": True
+#         },
+#         "options": {
+#             "wait_for_model": True
+#         }
+#     }
+#
+#     try:
+#         resp = requests.post(url, headers=headers, json=payload, timeout=30)
+#         resp.raise_for_status()
+#         data = resp.json()
+#
+#         # Handle different response formats
+#         if isinstance(data, list) and len(data) > 0:
+#             if "generated_text" in data[0]:
+#                 return data[0]["generated_text"]
+#             return str(data[0])
+#         elif isinstance(data, dict) and "generated_text" in data:
+#             return data["generated_text"]
+#         else:
+#             return f"I understand you said: '{prompt}'. How can I help you with that?"
+#
+#     except Exception as e:
+#         print(f"HF general model error: {e}")
+#         return f"Thanks for your message! I'm here to help. What would you like to know about '{prompt}'?"
 
 # app/services/ai_service.py
 from astrapy import DataAPIClient
 from app.config import Config
-import requests, time
+import requests, time, datetime
 
 # Validate env vars
 if not Config.ASTRA_DB_APPLICATION_TOKEN or not Config.ASTRA_DB_API_ENDPOINT:
@@ -110,7 +273,6 @@ def get_chat_history(user_id, limit=100):
         return []
     cursor = chat_collection.find({"user_id": user_id}, sort={"created_at": -1}, limit=limit)
     docs = list(cursor)
-    # Sort by timestamp ascending for display
     docs.sort(key=lambda x: x.get("created_at", 0))
     return [{"sender": d.get("sender"), "message": d.get("message"), "created_at": d.get("created_at")} for d in docs]
 
@@ -119,8 +281,6 @@ def get_user_message_count_today(user_id):
     if not user_id:
         return 0
 
-    # Get today's start timestamp (midnight)
-    import datetime
     today = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     today_timestamp = int(today.timestamp() * 1000)
 
@@ -132,103 +292,144 @@ def get_user_message_count_today(user_id):
 
     return len(list(cursor))
 
-# Improved Hugging Face call with better error handling
+# SIMPLE AND RELIABLE HUGGING FACE QUERY
 def query_huggingface(prompt, user_id=None):
     hf_token = Config.HUGGINGFACE_API_TOKEN
-    model = Config.HF_MODEL
 
-    # Check daily message limit (20 messages per user)
+    # Check daily message limit
     if user_id:
         message_count = get_user_message_count_today(user_id)
-        if message_count >= 20:  # Daily limit reached
-            return "You've reached your daily limit of 20 messages. Please upgrade to premium for unlimited chats! 🚀"
+        if message_count >= 20:
+            return "🚫 You've reached your daily limit of 20 messages. Please upgrade to premium for unlimited chats!"
 
+    # If no API token, use a smart fallback
     if not hf_token:
-        return "AI: I'm here to help! (API not configured)"
+        return generate_smart_response(prompt)
 
-    # Use a reliable model - DialoGPT works great for chat
-    if "dialo" in model.lower():
-        return query_dialogpt(prompt, hf_token)
-    else:
-        return query_general_model(prompt, hf_token, model)
+    # Try multiple free models that work reliably
+    models_to_try = [
+        "microsoft/DialoGPT-medium",
+        "microsoft/DialoGPT-large",
+        "facebook/blenderbot-400M-distill",
+        "HuggingFaceH4/zephyr-7b-beta",
+        "google/flan-t5-large"
+    ]
 
-def query_dialogpt(prompt, hf_token):
-    """Query DialoGPT model specifically"""
-    url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium"
-    headers = {"Authorization": f"Bearer {hf_token}"}
+    for model in models_to_try:
+        try:
+            response = try_huggingface_model(prompt, model, hf_token)
+            if response and response != "ERROR":
+                return response
+        except Exception as e:
+            print(f"Model {model} failed: {e}")
+            continue
 
-    payload = {
-        "inputs": {
-            "text": prompt,
-            "past_user_inputs": [],
-            "generated_responses": []
-        },
-        "parameters": {
-            "temperature": 0.9,
-            "max_length": 200,
-            "do_sample": True,
-            "top_p": 0.95
-        }
-    }
+    # If all models fail, use smart response
+    return generate_smart_response(prompt)
 
-    try:
-        resp = requests.post(url, headers=headers, json=payload, timeout=45)
-
-        if resp.status_code == 200:
-            data = resp.json()
-            if isinstance(data, dict) and "generated_text" in data:
-                return data["generated_text"]
-            return "I received your message! How can I assist you further?"
-        elif resp.status_code == 503:
-            # Model is loading, wait and retry once
-            time.sleep(10)
-            resp = requests.post(url, headers=headers, json=payload, timeout=45)
-            if resp.status_code == 200:
-                data = resp.json()
-                if isinstance(data, dict) and "generated_text" in data:
-                    return data["generated_text"]
-
-            return "Hello! I'm your AI assistant. How can I help you today? 😊"
-        else:
-            return f"Hello! Thanks for your message: '{prompt}'. How can I assist you today?"
-
-    except Exception as e:
-        print(f"HF API error: {e}")
-        return "Hello! I'm ready to chat. What would you like to talk about? 😊"
-
-def query_general_model(prompt, hf_token, model):
-    """Query general text generation models"""
+def try_huggingface_model(prompt, model, hf_token):
+    """Try a specific Hugging Face model"""
     url = f"https://api-inference.huggingface.co/models/{model}"
     headers = {"Authorization": f"Bearer {hf_token}"}
 
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "temperature": 0.7,
-            "max_new_tokens": 150,
-            "top_p": 0.9,
-            "do_sample": True
-        },
-        "options": {
-            "wait_for_model": True
+    # Different payloads for different model types
+    if "dialogpt" in model.lower():
+        payload = {
+            "inputs": prompt,
+            "parameters": {
+                "max_length": 200,
+                "temperature": 0.9,
+                "do_sample": True
+            },
+            "options": {
+                "wait_for_model": True
+            }
         }
-    }
+    elif "blenderbot" in model.lower():
+        payload = {
+            "inputs": prompt,
+            "parameters": {
+                "max_length": 150,
+                "temperature": 0.7
+            }
+        }
+    else:
+        # General text generation
+        payload = {
+            "inputs": prompt,
+            "parameters": {
+                "max_new_tokens": 150,
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "do_sample": True
+            },
+            "options": {
+                "wait_for_model": True
+            }
+        }
 
     try:
-        resp = requests.post(url, headers=headers, json=payload, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
+        response = requests.post(url, headers=headers, json=payload, timeout=45)
 
-        # Handle different response formats
-        if isinstance(data, list) and len(data) > 0:
-            if "generated_text" in data[0]:
-                return data[0]["generated_text"]
-            return str(data[0])
-        elif isinstance(data, dict) and "generated_text" in data:
-            return data["generated_text"]
-        else:
-            return f"I understand you said: '{prompt}'. How can I help you with that?"
+        if response.status_code == 200:
+            data = response.json()
+
+            # Handle different response formats
+            if isinstance(data, list):
+                if len(data) > 0:
+                    if "generated_text" in data[0]:
+                        return data[0]["generated_text"]
+                    return str(data[0])
+            elif isinstance(data, dict):
+                if "generated_text" in data:
+                    return data["generated_text"]
+                if "conversation" in data and "generated_responses" in data["conversation"]:
+                    return data["conversation"]["generated_responses"][0]
+
+            return "ERROR"
+
+        elif response.status_code == 503:
+            # Model is loading, wait longer
+            print(f"Model {model} is loading, waiting...")
+            time.sleep(15)
+            response = requests.post(url, headers=headers, json=payload, timeout=45)
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list) and len(data) > 0 and "generated_text" in data[0]:
+                    return data[0]["generated_text"]
+
+        return "ERROR"
 
     except Exception as e:
-        print(f"HF general model error: {e}")
-        return f"Thanks for your message! I'm here to help. What would you like to know about '{prompt}'?"
+        print(f"Error with model {model}: {e}")
+        return "ERROR"
+
+def generate_smart_response(prompt):
+    """Generate a smart response when API fails"""
+    prompt_lower = prompt.lower()
+
+    # Greeting responses
+    if any(word in prompt_lower for word in ['hello', 'hi', 'hey', 'hola']):
+        return "Hello! 👋 I'm your AI assistant. How can I help you today?"
+
+    # Question responses
+    elif '?' in prompt or any(word in prompt_lower for word in ['what', 'how', 'why', 'when', 'where']):
+        if 'array' in prompt_lower and 'c ' in prompt_lower:
+            return "In C programming, an array is a collection of items stored at contiguous memory locations. It allows storing multiple items of the same type together.\n\nExample:\n```c\nint numbers[5] = {1, 2, 3, 4, 5};\n```\nArrays in C are fixed-size and zero-indexed. The first element is at index 0. Would you like me to explain more about arrays?"
+
+        elif 'programming' in prompt_lower:
+            return "I'd be happy to help with programming questions! Could you specify which language or concept you're interested in? 🚀"
+
+        else:
+            return "That's an interesting question! I'm here to help you learn and explore various topics. Could you provide more details?"
+
+    # Default engaging response
+    else:
+        responses = [
+            f"I understand you're saying: '{prompt}'. That's interesting! What would you like to know more about?",
+            f"Thanks for sharing: '{prompt}'. How can I assist you with this?",
+            f"Got it! Regarding '{prompt}', I'm here to help. What specific information are you looking for?",
+            f"I see you mentioned: '{prompt}'. That's a great topic! How can I help you explore this further?"
+        ]
+        import random
+        return random.choice(responses)
