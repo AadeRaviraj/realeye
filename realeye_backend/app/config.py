@@ -16,12 +16,5 @@ class Config:
     
     
     HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
-    HF_MODEL = os.getenv("HF_MODEL", "huggingface-projects/llama-2-7b-chat")
+    HF_MODEL = os.getenv("HF_MODEL", "microsoft/DialoGPT-medium")
 
-# Optional aliases for old references
-# ASTRA_DB_TOKEN = Config.ASTRA_DB_APPLICATION_TOKEN
-# HF_API_TOKEN = Config.HUGGINGFACE_API_TOKEN
-#
-#
-# print("Loaded ASTRA Token:", Config.ASTRA_DB_APPLICATION_TOKEN)
-# print("Loaded API Endpoint:", Config.ASTRA_DB_API_ENDPOINT)
