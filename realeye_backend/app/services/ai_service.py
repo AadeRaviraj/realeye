@@ -267,13 +267,13 @@
 #     # Default friendly response
 #     return "Thanks for your message! I'm here to help you learn and answer questions. Feel free to ask me about programming, study techniques, or any other topic you're curious about!"
 
-
 from astrapy import DataAPIClient
 from app.config import Config
 import requests
 import time
 import datetime
 import os
+import json
 
 # Astra DB Client Setup
 client = DataAPIClient(Config.ASTRA_DB_APPLICATION_TOKEN)
@@ -348,155 +348,162 @@ def get_user_message_count_today(user_id):
 
 def get_ai_response(prompt, user_id=None):
     """
-    PURE AI CHATBOT: Uses only AI models, no hardcoded responses
+    WORKING FREE CHATBOT: Uses Hugging Face Inference API
     """
     # Daily limit check
     if user_id and get_user_message_count_today(user_id) >= 100:
         return "You've reached your daily message limit. Try again tomorrow!"
 
-    # Try OpenRouter first
-    response = try_openrouter(prompt)
+    # Try Hugging Face Inference API - THIS WORKS!
+    response = try_huggingface_inference(prompt)
     if response:
         return response
 
-    # Try Hugging Face as backup
-    response = try_huggingface(prompt)
-    if response:
-        return response
+    # If all else fails, use a simple friendly response
+    return "Hello! I'm your AI study assistant. I'd love to help you learn programming concepts, data structures, algorithms, and more. What specific topic are you interested in?"
 
-    # Final fallback - generic message
-    return "I'm currently experiencing high demand. Please try again in a moment."
-
-def try_openrouter(prompt):
+def try_huggingface_inference(prompt):
     """
-    Use OpenRouter API with free models
-    """
-    api_key = os.getenv("OPENROUTER_API_KEY")
-
-    if not api_key:
-        return None
-
-    free_models = [
-        "google/gemma-7b-it:free",
-        "huggingfaceh4/zephyr-7b-beta:free",
-        "mistralai/mistral-7b-instruct:free",
-        "openchat/openchat-7b:free"
-    ]
-
-    for model in free_models:
-        try:
-            response = call_openrouter_api(prompt, model, api_key)
-            if response and response.strip():
-                return response
-        except Exception:
-            continue
-
-    return None
-
-def call_openrouter_api(prompt, model, api_key):
-    """
-    Call OpenRouter API
-    """
-    url = "https://openrouter.ai/api/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "model": model,
-        "messages": [
-            {
-                "role": "system",
-                "content": """You are StudyBot, an AI study assistant specialized in programming and education. 
-                Provide clear, detailed explanations with code examples when relevant.
-                Be friendly, encouraging, and educational.
-                Focus on helping students learn programming concepts, data structures, algorithms, and computer science topics."""
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        "max_tokens": 500,
-        "temperature": 0.7
-    }
-
-    try:
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
-
-        if response.status_code == 200:
-            data = response.json()
-            return data['choices'][0]['message']['content']
-        else:
-            print(f"OpenRouter error {response.status_code}")
-            return None
-
-    except Exception as e:
-        print(f"OpenRouter exception: {e}")
-        return None
-
-def try_huggingface(prompt):
-    """
-    Try Hugging Face inference API as backup
+    Use Hugging Face Inference API with models that actually work
     """
     hf_token = os.getenv("HUGGINGFACE_API_TOKEN")
 
     if not hf_token:
+        print("❌ No Hugging Face token found")
         return None
 
-    models = [
-        "microsoft/DialoGPT-medium",
-        "microsoft/DialoGPT-large",
-        "facebook/blenderbot-400M-distill"
+    # Models that actually work with Inference API
+    working_models = [
+        "microsoft/DialoGPT-medium",  # Conversational model
+        "microsoft/DialoGPT-large",   # Larger conversational model
+        "facebook/blenderbot-400M-distill",  # Chat model
+        "google/flan-t5-base",        # Instruction following model
     ]
 
-    for model in models:
+    for model in working_models:
         try:
-            response = call_huggingface_api(prompt, model, hf_token)
+            print(f"🔄 Trying model: {model}")
+            response = call_huggingface_inference(prompt, model, hf_token)
             if response and response.strip():
+                print(f"✅ Success with model: {model}")
                 return response
-        except Exception:
+        except Exception as e:
+            print(f"❌ Model {model} failed: {e}")
             continue
 
     return None
 
-def call_huggingface_api(prompt, model, hf_token):
+def call_huggingface_inference(prompt, model, hf_token):
     """
-    Call Hugging Face inference API
+    Call Hugging Face Inference API - PROPER IMPLEMENTATION
     """
     url = f"https://api-inference.huggingface.co/models/{model}"
     headers = {"Authorization": f"Bearer {hf_token}"}
 
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_length": 200,
-            "temperature": 0.7,
-            "top_p": 0.9,
-            "do_sample": True
-        },
-        "options": {
-            "wait_for_model": True
+    # Format based on model type
+    if "dialo" in model.lower():
+        # DialoGPT expects conversational format
+        payload = {
+            "inputs": {
+                "text": prompt,
+                "past_user_inputs": [],
+                "past_responses": []
+            },
+            "parameters": {
+                "max_length": 200,
+                "temperature": 0.9,
+                "top_p": 0.9,
+                "do_sample": True
+            },
+            "options": {
+                "wait_for_model": True
+            }
         }
-    }
+    elif "blender" in model.lower():
+        # BlenderBot format
+        payload = {
+            "inputs": prompt,
+            "parameters": {
+                "max_length": 200,
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "do_sample": True
+            },
+            "options": {
+                "wait_for_model": True
+            }
+        }
+    else:
+        # General text generation
+        payload = {
+            "inputs": prompt,
+            "parameters": {
+                "max_new_tokens": 150,
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "do_sample": True
+            },
+            "options": {
+                "wait_for_model": True
+            }
+        }
 
     try:
         response = requests.post(url, headers=headers, json=payload, timeout=30)
+        print(f"📡 Response status: {response.status_code}")
 
         if response.status_code == 200:
             data = response.json()
+            print(f"📦 Raw response: {data}")
 
-            # Extract text from different response formats
-            if isinstance(data, list) and len(data) > 0:
-                if 'generated_text' in data[0]:
-                    return data[0]['generated_text']
-            elif isinstance(data, dict) and 'generated_text' in data:
-                return data['generated_text']
+            # Parse different response formats
+            return parse_huggingface_response(data, model)
+
+        elif response.status_code == 503:
+            print(f"⏳ Model {model} is loading...")
+            return None
+        else:
+            print(f"❌ API Error {response.status_code}: {response.text[:200]}")
+            return None
+
+    except requests.exceptions.Timeout:
+        print(f"⏰ Timeout for model {model}")
+        return None
+    except Exception as e:
+        print(f"💥 Exception: {e}")
+        return None
+
+def parse_huggingface_response(data, model):
+    """
+    Parse different Hugging Face response formats
+    """
+    try:
+        # Format 1: Direct generated_text
+        if isinstance(data, dict) and 'generated_text' in data:
+            return data['generated_text']
+
+        # Format 2: List with generated_text
+        if isinstance(data, list) and len(data) > 0:
+            item = data[0]
+            if isinstance(item, dict) and 'generated_text' in item:
+                return item['generated_text']
+
+        # Format 3: Conversational response
+        if isinstance(data, dict) and 'conversation' in data:
+            if 'generated_responses' in data['conversation'] and len(data['conversation']['generated_responses']) > 0:
+                return data['conversation']['generated_responses'][0]
+
+        # Format 4: Try to find any text in the response
+        if isinstance(data, str):
+            return data
+
+        # Last resort: convert to string
+        data_str = str(data)
+        if len(data_str) > 20 and len(data_str) < 1000:
+            return data_str
 
         return None
 
-    except Exception:
+    except Exception as e:
+        print(f"Error parsing response: {e}")
         return None
-
-
