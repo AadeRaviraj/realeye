@@ -98,135 +98,203 @@
 #     response.headers.add("Access-Control-Allow-Origin", "*")
 #     return response
 
+#
+# from flask import Blueprint, request, jsonify
+# from app.services.ai_service import save_message, get_chat_history, query_huggingface, get_user_message_count_today
+#
+# chat_bp = Blueprint("chat_bp", __name__)
+#
+# @chat_bp.route("/send", methods=["POST", "OPTIONS"])
+# def send_message():
+#     """
+#     Main endpoint for sending messages to AI chatbot
+#     """
+#     if request.method == "OPTIONS":
+#         return _build_cors_preflight_response()
+#
+#     try:
+#         # Validate request
+#         if not request.is_json:
+#             return jsonify({"error": "Request must be JSON"}), 400
+#
+#         data = request.get_json() or {}
+#         user_id = data.get("user_id")
+#         message = data.get("message", "").strip()
+#
+#         # Input validation
+#         if not message:
+#             return jsonify({"error": "Message cannot be empty"}), 400
+#         if not user_id:
+#             return jsonify({"error": "User ID is required"}), 400
+#
+#         # Store user message
+#         save_message(user_id, message, sender="user")
+#
+#         # Get AI response
+#         ai_response = query_huggingface(message, user_id)
+#
+#         # Store AI response
+#         save_message(user_id, ai_response, sender="ai")
+#
+#         # Get usage stats
+#         message_count = get_user_message_count_today(user_id)
+#
+#         # Return success response
+#         response_data = {
+#             "reply": ai_response,
+#             "user_id": user_id,
+#             "daily_usage": message_count,
+#             "daily_limit": 50,
+#             "remaining_messages": max(0, 50 - message_count),
+#             "status": "success"
+#         }
+#
+#         return _corsify_actual_response(jsonify(response_data))
+#
+#     except Exception as e:
+#         print(f"💥 Error in send_message: {str(e)}")
+#         error_response = {
+#             "error": "Internal server error",
+#             "reply": "I'm experiencing some technical difficulties. Please try again in a moment.",
+#             "status": "error"
+#         }
+#         return _corsify_actual_response(jsonify(error_response)), 500
+#
+# @chat_bp.route("/history", methods=["GET"])
+# def get_chat_history_route():
+#     """
+#     Get chat history for a user
+#     """
+#     try:
+#         user_id = request.args.get("user_id")
+#         if not user_id:
+#             return jsonify({"error": "User ID is required"}), 400
+#
+#         limit = request.args.get("limit", 50, type=int)
+#         messages = get_chat_history(user_id, limit)
+#
+#         return _corsify_actual_response(jsonify({
+#             "user_id": user_id,
+#             "messages": messages,
+#             "count": len(messages),
+#             "status": "success"
+#         }))
+#
+#     except Exception as e:
+#         print(f"Error getting chat history: {e}")
+#         return _corsify_actual_response(jsonify({
+#             "error": "Failed to retrieve chat history",
+#             "status": "error"
+#         })), 500
+#
+# @chat_bp.route("/usage", methods=["GET"])
+# def get_usage():
+#     """
+#     Get user's daily message usage
+#     """
+#     try:
+#         user_id = request.args.get("user_id")
+#         if not user_id:
+#             return jsonify({"error": "User ID is required"}), 400
+#
+#         message_count = get_user_message_count_today(user_id)
+#
+#         return _corsify_actual_response(jsonify({
+#             "user_id": user_id,
+#             "daily_messages_used": message_count,
+#             "daily_limit": 50,
+#             "remaining_messages": max(0, 50 - message_count),
+#             "status": "success"
+#         }))
+#
+#     except Exception as e:
+#         print(f"Error getting usage: {e}")
+#         return _corsify_actual_response(jsonify({
+#             "error": "Failed to get usage data",
+#             "status": "error"
+#         })), 500
+#
+# def _build_cors_preflight_response():
+#     """
+#     Handle CORS preflight requests
+#     """
+#     response = jsonify({"status": "preflight"})
+#     response.headers.add("Access-Control-Allow-Origin", "*")
+#     response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+#     response.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+#     return response
+#
+# def _corsify_actual_response(response):
+#     """
+#     Add CORS headers to actual responses
+#     """
+#     response.headers.add("Access-Control-Allow-Origin", "*")
+#     return response
 
 from flask import Blueprint, request, jsonify
-from app.services.ai_service import save_message, get_chat_history, query_huggingface, get_user_message_count_today
+from app.services.ai_service import save_message, get_chat_history, get_ai_response, get_user_message_count_today
 
 chat_bp = Blueprint("chat_bp", __name__)
 
-@chat_bp.route("/send", methods=["POST", "OPTIONS"])
+@chat_bp.route("/send", methods=["POST"])
 def send_message():
-    """
-    Main endpoint for sending messages to AI chatbot
-    """
-    if request.method == "OPTIONS":
-        return _build_cors_preflight_response()
-
     try:
-        # Validate request
-        if not request.is_json:
-            return jsonify({"error": "Request must be JSON"}), 400
-
         data = request.get_json() or {}
         user_id = data.get("user_id")
         message = data.get("message", "").strip()
 
-        # Input validation
         if not message:
-            return jsonify({"error": "Message cannot be empty"}), 400
+            return jsonify({"error": "Message is required"}), 400
         if not user_id:
             return jsonify({"error": "User ID is required"}), 400
 
-        # Store user message
-        save_message(user_id, message, sender="user")
+        # Save user message
+        save_message(user_id, message, "user")
 
         # Get AI response
-        ai_response = query_huggingface(message, user_id)
+        ai_reply = get_ai_response(message, user_id)
 
-        # Store AI response
-        save_message(user_id, ai_response, sender="ai")
+        # Save AI response
+        save_message(user_id, ai_reply, "ai")
 
-        # Get usage stats
+        # Get usage
         message_count = get_user_message_count_today(user_id)
 
-        # Return success response
-        response_data = {
-            "reply": ai_response,
+        return jsonify({
+            "reply": ai_reply,
             "user_id": user_id,
             "daily_usage": message_count,
-            "daily_limit": 50,
-            "remaining_messages": max(0, 50 - message_count),
+            "remaining_messages": max(0, 100 - message_count),
             "status": "success"
-        }
-
-        return _corsify_actual_response(jsonify(response_data))
+        })
 
     except Exception as e:
-        print(f"💥 Error in send_message: {str(e)}")
-        error_response = {
-            "error": "Internal server error",
-            "reply": "I'm experiencing some technical difficulties. Please try again in a moment.",
+        print(f"Error: {e}")
+        return jsonify({
+            "error": "Server error",
+            "reply": "I'm having trouble responding right now. Please try again.",
             "status": "error"
-        }
-        return _corsify_actual_response(jsonify(error_response)), 500
+        }), 500
 
 @chat_bp.route("/history", methods=["GET"])
-def get_chat_history_route():
-    """
-    Get chat history for a user
-    """
-    try:
-        user_id = request.args.get("user_id")
-        if not user_id:
-            return jsonify({"error": "User ID is required"}), 400
+def history():
+    user_id = request.args.get("user_id")
+    if not user_id:
+        return jsonify({"error": "user_id required"}), 400
 
-        limit = request.args.get("limit", 50, type=int)
-        messages = get_chat_history(user_id, limit)
-
-        return _corsify_actual_response(jsonify({
-            "user_id": user_id,
-            "messages": messages,
-            "count": len(messages),
-            "status": "success"
-        }))
-
-    except Exception as e:
-        print(f"Error getting chat history: {e}")
-        return _corsify_actual_response(jsonify({
-            "error": "Failed to retrieve chat history",
-            "status": "error"
-        })), 500
+    messages = get_chat_history(user_id)
+    return jsonify({"messages": messages})
 
 @chat_bp.route("/usage", methods=["GET"])
 def get_usage():
-    """
-    Get user's daily message usage
-    """
-    try:
-        user_id = request.args.get("user_id")
-        if not user_id:
-            return jsonify({"error": "User ID is required"}), 400
+    user_id = request.args.get("user_id")
+    if not user_id:
+        return jsonify({"error": "user_id required"}), 400
 
-        message_count = get_user_message_count_today(user_id)
-
-        return _corsify_actual_response(jsonify({
-            "user_id": user_id,
-            "daily_messages_used": message_count,
-            "daily_limit": 50,
-            "remaining_messages": max(0, 50 - message_count),
-            "status": "success"
-        }))
-
-    except Exception as e:
-        print(f"Error getting usage: {e}")
-        return _corsify_actual_response(jsonify({
-            "error": "Failed to get usage data",
-            "status": "error"
-        })), 500
-
-def _build_cors_preflight_response():
-    """
-    Handle CORS preflight requests
-    """
-    response = jsonify({"status": "preflight"})
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
-    response.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
-    return response
-
-def _corsify_actual_response(response):
-    """
-    Add CORS headers to actual responses
-    """
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response
+    message_count = get_user_message_count_today(user_id)
+    return jsonify({
+        "user_id": user_id,
+        "daily_messages_used": message_count,
+        "daily_limit": 100,
+        "remaining_messages": max(0, 100 - message_count)
+    })

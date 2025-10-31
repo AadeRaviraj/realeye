@@ -15,8 +15,12 @@ class Config:
     ASTRA_DB_API_ENDPOINT = os.getenv("ASTRA_DB_API_ENDPOINT")
     
     
-    HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
-    HF_MODEL = os.getenv("HF_MODEL", "microsoft/DialoGPT-medium")
+    # HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
 
-    MAX_DAILY_MESSAGES = 50
-    REQUEST_TIMEOUT = 30
+
+    # AI API Keys
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+    HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN", "")
+
+    # App Settings
+    MAX_DAILY_MESSAGES = 100
