@@ -1,12 +1,11 @@
 from astrapy import DataAPIClient
 from app.config import Config
-import requests, time, datetime, json
+import requests
+import time
+import datetime
+import json
 
-# Validate env vars
-if not Config.ASTRA_DB_APPLICATION_TOKEN or not Config.ASTRA_DB_API_ENDPOINT:
-    raise RuntimeError("ASTRA_DB_APPLICATION_TOKEN or ASTRA_DB_API_ENDPOINT missing in environment")
-
-# Astra Data API client
+# Astra DB Client Setup
 client = DataAPIClient(Config.ASTRA_DB_APPLICATION_TOKEN)
 db = client.get_database_by_api_endpoint(Config.ASTRA_DB_API_ENDPOINT)
 
@@ -20,88 +19,122 @@ except Exception as e:
     chat_collection = db.get_collection(collection_name)
 
 def save_message(user_id, message, sender):
+    """
+    Save message to Astra DB
+    """
     if user_id is None:
         user_id = "anonymous"
+
     doc = {
         "user_id": user_id,
         "message": message,
         "sender": sender,
         "created_at": int(time.time() * 1000),
-        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+        "timestamp": datetime.datetime.now().isoformat()
     }
-    chat_collection.insert_one(doc)
-    return doc
 
-def get_chat_history(user_id, limit=100):
+    try:
+        chat_collection.insert_one(doc)
+        return doc
+    except Exception as e:
+        print(f"Error saving message to DB: {e}")
+        return None
+
+def get_chat_history(user_id, limit=50):
+    """
+    Retrieve chat history for user
+    """
     if not user_id:
         return []
-    cursor = chat_collection.find({"user_id": user_id}, sort={"created_at": -1}, limit=limit)
-    docs = list(cursor)
-    docs.sort(key=lambda x: x.get("created_at", 0))
-    return [{"sender": d.get("sender"), "message": d.get("message"), "created_at": d.get("created_at")} for d in docs]
+
+    try:
+        cursor = chat_collection.find(
+            {"user_id": user_id},
+            sort={"created_at": -1},
+            limit=limit
+        )
+        docs = list(cursor)
+        docs.sort(key=lambda x: x.get("created_at", 0))
+
+        return [{
+            "sender": d.get("sender"),
+            "message": d.get("message"),
+            "timestamp": d.get("timestamp")
+        } for d in docs]
+    except Exception as e:
+        print(f"Error retrieving chat history: {e}")
+        return []
 
 def get_user_message_count_today(user_id):
-    """Count how many messages user sent today"""
+    """
+    Count user messages sent today for rate limiting
+    """
     if not user_id:
         return 0
 
-    today = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    today_timestamp = int(today.timestamp() * 1000)
+    try:
+        today = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_timestamp = int(today.timestamp() * 1000)
 
-    cursor = chat_collection.find({
-        "user_id": user_id,
-        "sender": "user",
-        "created_at": {"$gte": today_timestamp}
-    })
+        cursor = chat_collection.find({
+            "user_id": user_id,
+            "sender": "user",
+            "created_at": {"$gte": today_timestamp}
+        })
 
-    return len(list(cursor))
+        return len(list(cursor))
+    except Exception as e:
+        print(f"Error counting user messages: {e}")
+        return 0
 
 def query_huggingface(prompt, user_id=None):
     """
-    IMPROVED: Better Hugging Face API implementation with multiple model fallbacks
+    Main function to query Hugging Face models with proper error handling
     """
-    # Check daily message limit
+    # Daily message limit check
     if user_id:
         message_count = get_user_message_count_today(user_id)
-        if message_count >= 20:
-            return "🚫 You've reached your daily limit of 20 messages. Please upgrade to premium for unlimited chats!"
+        if message_count >= 50:  # Increased limit for better UX
+            return "I've reached my daily message limit. Please try again tomorrow or upgrade for unlimited access!"
 
     hf_token = Config.HUGGINGFACE_API_TOKEN
 
-    # If no token, use smart responses
     if not hf_token:
-        print("❌ No Hugging Face token found, using fallback")
-        return generate_smart_response(prompt)
+        return get_fallback_response(prompt)
 
-    # Try multiple models in sequence
+    # Try different free conversational models
     models_to_try = [
-        "microsoft/DialoGPT-large",  # Better for conversation
-        "microsoft/DialoGPT-medium",
-        "google/flan-t5-large",
-        "facebook/blenderbot-400M-distill"
+        "microsoft/DialoGPT-medium",    # Good for conversations
+        "microsoft/DialoGPT-small",     # Lightweight fallback
+        "facebook/blenderbot-400M-distill",  # General chatbot
+        "HuggingFaceH4/zephyr-7b-beta"  # Instruction-tuned model
     ]
 
     for model in models_to_try:
         try:
-            print(f"🤖 Trying model: {model}")
-            response = try_huggingface_model(prompt, model, hf_token)
-            if response and response != generate_smart_response(prompt):
+            print(f"🔄 Trying model: {model}")
+            response = call_huggingface_api(prompt, model, hf_token)
+            if response and response.strip():
+                print(f"✅ Success with model: {model}")
                 return response
         except Exception as e:
-            print(f"❌ Model {model} failed: {e}")
+            print(f"❌ Model {model} failed: {str(e)[:100]}...")
             continue
 
     print("❌ All models failed, using fallback")
-    return generate_smart_response(prompt)
+    return get_fallback_response(prompt)
 
-def try_huggingface_model(prompt, model, hf_token):
-    """Try a specific Hugging Face model"""
+def call_huggingface_api(prompt, model, hf_token):
+    """
+    Make API call to Hugging Face with proper formatting
+    """
+    # Use the new router endpoint
     url = f"https://api-inference.huggingface.co/models/{model}"
     headers = {"Authorization": f"Bearer {hf_token}"}
 
-    # Different payloads for different model types
-    if "dialo" in model.lower() or "blender" in model.lower():
-        # Conversational models
+    # Format prompt based on model type
+    if "dialo" in model.lower():
+        # DialoGPT expects conversational format
         payload = {
             "inputs": {
                 "text": prompt,
@@ -112,16 +145,31 @@ def try_huggingface_model(prompt, model, hf_token):
                 "max_length": 200,
                 "temperature": 0.7,
                 "top_p": 0.9,
-                "do_sample": True
+                "do_sample": True,
+                "repetition_penalty": 1.1
             },
             "options": {
                 "wait_for_model": True,
                 "use_cache": True
             }
         }
+    elif "blender" in model.lower():
+        # BlenderBot format
+        payload = {
+            "inputs": prompt,
+            "parameters": {
+                "max_length": 200,
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "do_sample": True
+            },
+            "options": {
+                "wait_for_model": True
+            }
+        }
     else:
-        # Text generation models
-        formatted_prompt = f"Please provide a helpful and friendly response to this question: {prompt}"
+        # General text generation models
+        formatted_prompt = f"Please provide a helpful, friendly response to this: {prompt}"
         payload = {
             "inputs": formatted_prompt,
             "parameters": {
@@ -137,105 +185,84 @@ def try_huggingface_model(prompt, model, hf_token):
         }
 
     try:
-        print(f"📡 Sending request to: {model}")
-        response = requests.post(url, headers=headers, json=payload, timeout=45)
-        print(f"📊 Response status: {response.status_code}")
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
 
         if response.status_code == 200:
             data = response.json()
-            print(f"📦 Raw response: {data}")
-
-            # Parse response based on model type
-            if "dialo" in model.lower() or "blender" in model.lower():
-                # Conversational model response
-                if isinstance(data, dict) and "generated_text" in data:
-                    return data["generated_text"]
-            else:
-                # Text generation model response
-                if isinstance(data, list) and len(data) > 0:
-                    if "generated_text" in data[0]:
-                        return data[0]["generated_text"]
-                    elif "generated_text" in data:
-                        return data["generated_text"]
-
-            # Fallback extraction
-            if isinstance(data, list) and len(data) > 0:
-                if isinstance(data[0], dict):
-                    for key in ["generated_text", "text", "response"]:
-                        if key in data[0]:
-                            return data[0][key]
-                    # Return first string value found
-                    for value in data[0].values():
-                        if isinstance(value, str) and len(value) > 10:
-                            return value
-
+            return extract_generated_text(data)
         elif response.status_code == 503:
-            print(f"⏳ Model {model} is loading, trying next model...")
+            print(f"⏳ Model {model} is loading...")
             return None
         else:
-            print(f"❌ API Error {response.status_code}: {response.text}")
+            print(f"❌ API Error {response.status_code}: {response.text[:200]}")
             return None
 
     except requests.exceptions.Timeout:
         print(f"⏰ Timeout for model {model}")
         return None
     except Exception as e:
-        print(f"💥 Exception with model {model}: {e}")
+        print(f"💥 Request exception: {e}")
         return None
+
+def extract_generated_text(data):
+    """
+    Extract generated text from various Hugging Face response formats
+    """
+    if isinstance(data, list):
+        # Most common format: list of dictionaries
+        for item in data:
+            if isinstance(item, dict):
+                if 'generated_text' in item:
+                    return item['generated_text']
+                # Check for other possible keys
+                for key in ['generated_text', 'text', 'response', 'answer']:
+                    if key in item and item[key]:
+                        return item[key]
+
+    elif isinstance(data, dict):
+        # Sometimes it's a direct dictionary
+        if 'generated_text' in data:
+            return data['generated_text']
+        # Check nested structures
+        for key in ['generated_text', 'text', 'response', 'answer']:
+            if key in data and data[key]:
+                return data[key]
+
+    # If no structured data found, try to find any string in the response
+    if isinstance(data, str):
+        return data
+
+    # Last resort: convert to string and extract
+    data_str = str(data)
+    if len(data_str) > 50:  # Reasonable response length
+        return data_str
 
     return None
 
-def generate_smart_response(prompt):
+def get_fallback_response(prompt):
     """
-    Enhanced smart responses with more programming topics
+    Intelligent fallback when API is unavailable
     """
     prompt_lower = prompt.lower().strip()
 
-    # Greetings
-    if any(word in prompt_lower for word in ['hello', 'hi', 'hey', 'hola', 'namaste']):
-        return "Hello! 👋 I'm your AI study assistant! I'm here to help you with programming, math, science, or any other subject. What would you like to learn today?"
+    # General conversational responses
+    greeting_words = ['hello', 'hi', 'hey', 'hola', 'namaste', 'greetings']
+    if any(word in prompt_lower for word in greeting_words):
+        return "Hello! 👋 I'm your AI study assistant. I'm here to help you learn and answer your questions. What would you like to know today?"
 
-    # Programming questions - EXPANDED
-    elif 'ascii' in prompt_lower:
-        return ("**ASCII (American Standard Code for Information Interchange)** is a character encoding standard that represents text in computers. "
-                "It uses 7-bit codes to represent 128 characters including:\n"
-                "• Letters (A-Z, a-z)\n• Numbers (0-9)\n• Punctuation marks\n• Control characters\n\n"
-                "For example: 'A' = 65, 'a' = 97, '0' = 48")
+    # Question patterns
+    if any(word in prompt_lower for word in ['what', 'how', 'why', 'when', 'where', 'explain', 'tell me about']):
+        return "That's an interesting question! I'd be happy to help you learn more about this topic. Could you provide some more specific details so I can give you the best possible explanation?"
 
-    elif 'variable' in prompt_lower:
-        return ("**Variables** in programming are containers that store data values.\n\n"
-                "📝 **Key characteristics:**\n"
-                "• Have a name (identifier)\n• Hold a value\n• Have a data type\n• Can be modified\n\n"
-                "**Example in different languages:**\n"
-                "Python: `x = 5`\nJava: `int x = 5;`\nJavaScript: `let x = 5;`")
-
-    elif 'datatype' in prompt_lower or 'data type' in prompt_lower:
-        return ("**Data types** define the type of data a variable can hold.\n\n"
-                "🔧 **Common data types:**\n"
-                "• **Primitive**: int, float, char, boolean\n"
-                "• **Composite**: array, string, object, list\n"
-                "• **Special**: null, undefined\n\n"
-                "Each programming language has its own specific data types with different sizes and capabilities.")
-
-    elif 'array' in prompt_lower and 'c' in prompt_lower:
-        return ("**Arrays in C Programming:**\n"
-                "An array in C is a collection of items stored at contiguous memory locations.\n\n"
-                "📝 **Syntax:**\n"
-                "```c\nint arr[5]; // declares integer array of size 5\nint arr[5] = {1, 2, 3, 4, 5}; // initialization\n```\n"
-                "**Key features:** Fixed size, same data type, index access starting from 0.")
-
-    elif any(word in prompt_lower for word in ['programming', 'code', 'function', 'loop', 'string', 'int', 'float', 'boolean']):
-        return "I'd be happy to help with programming concepts! Could you specify which programming language and what particular aspect you're interested in?"
+    # Programming related
+    programming_keywords = ['code', 'programming', 'function', 'variable', 'algorithm', 'debug', 'syntax']
+    if any(keyword in prompt_lower for keyword in programming_keywords):
+        return "I'd love to help with programming concepts! Please let me know which programming language and specific concept you're working on, and I'll do my best to assist you."
 
     # Study related
-    elif any(word in prompt_lower for word in ['study', 'learn', 'teach', 'explain']):
-        return "I can help you study various subjects! Please tell me what topic you're working on - programming, math, science, history, or anything else."
+    study_keywords = ['study', 'learn', 'teach', 'education', 'homework', 'assignment']
+    if any(keyword in prompt_lower for keyword in study_keywords):
+        return "I'm here to support your learning journey! Whether it's programming, math, science, or any other subject, feel free to ask me anything specific you're studying."
 
-    # Default fallback - MORE HELPFUL
-    return ("I'm your AI study assistant! I can help you with:\n"
-            "• Programming concepts (variables, functions, data types)\n"
-            "• Math problems and explanations\n"
-            "• Science topics\n"
-            "• Study techniques\n"
-            "• Code examples\n\n"
-            "What specific topic would you like help with today?")
+    # Default friendly response
+    return "Thanks for your message! I'm here to help you learn and answer questions. Feel free to ask me about programming, study techniques, or any other topic you're curious about!"

@@ -18,3 +18,5 @@ class Config:
     HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
     HF_MODEL = os.getenv("HF_MODEL", "microsoft/DialoGPT-medium")
 
+    MAX_DAILY_MESSAGES = 50
+    REQUEST_TIMEOUT = 30
