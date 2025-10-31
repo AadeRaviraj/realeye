@@ -13,14 +13,17 @@ MAX_IMAGE_SIZE_MB = 1
 class Config:
     ASTRA_DB_APPLICATION_TOKEN = os.getenv("ASTRA_DB_APPLICATION_TOKEN")
     ASTRA_DB_API_ENDPOINT = os.getenv("ASTRA_DB_API_ENDPOINT")
-    
-    
+
+    # Google Gemini API (FREE)
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+
     # HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
 
 
-    # AI API Keys
-    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-    HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN", "")
+    # # AI API Keys
+    # OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+    # HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN", "")
 
     # App Settings
     MAX_DAILY_MESSAGES = 100

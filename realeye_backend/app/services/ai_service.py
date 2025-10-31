@@ -515,6 +515,7 @@ import requests
 import time
 import datetime
 import os
+import json
 
 # Astra DB Client Setup
 client = DataAPIClient(Config.ASTRA_DB_APPLICATION_TOKEN)
@@ -589,56 +590,110 @@ def get_user_message_count_today(user_id):
 
 def get_ai_response(prompt, user_id=None):
     """
-    SIMPLE WORKING CHATBOT - Uses free APIs
+    USE GOOGLE GEMINI API - FREE & RELIABLE
     """
+    # Daily limit check
     if user_id and get_user_message_count_today(user_id) >= 100:
-        return "Daily limit reached. Try again tomorrow!"
+        return "You've reached your daily message limit. Try again tomorrow!"
 
-    # Try Hugging Face first
-    hf_response = try_hugging_face(prompt)
-    if hf_response:
-        return hf_response
+    # Try Google Gemini API (FREE)
+    gemini_response = call_gemini_api(prompt)
+    if gemini_response:
+        return gemini_response
 
-    # Always return a helpful message
-    return "👋 Hello! I'm your AI study assistant! I can help you learn programming, data structures, algorithms, and computer science concepts. Feel free to ask me anything about Java, Python, SQL, OOP, variables, arrays, or any programming topic!"
+    # If Gemini fails, try another free API
+    deepseek_response = call_deepseek_api(prompt)
+    if deepseek_response:
+        return deepseek_response
 
-def try_hugging_face(prompt):
+    # Final fallback - simple but helpful
+    return "I'm here to help you learn programming! Ask me about Java, Python, C++, data types, variables, OOP concepts, algorithms, or any programming topic."
+
+def call_gemini_api(prompt):
     """
-    Simple Hugging Face API call that WORKS
+    Google Gemini API - FREE and reliable
     """
-    hf_token = os.getenv("HUGGINGFACE_API_TOKEN")
+    api_key = os.getenv("GEMINI_API_KEY")
 
-    if not hf_token:
+    if not api_key:
+        print("❌ Gemini API key not found")
         return None
 
-    # Use a reliable model
-    url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium"
-    headers = {"Authorization": f"Bearer {hf_token}"}
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
 
     payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_length": 150,
-            "temperature": 0.9,
-            "do_sample": True
-        },
-        "options": {
-            "wait_for_model": True
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": f"""You are StudyBot, an AI programming tutor. Provide clear, educational responses about programming concepts.
+
+User question: {prompt}
+
+Please provide a helpful, detailed explanation with code examples if relevant. Be friendly and educational."""
+                    }
+                ]
+            }
+        ],
+        "generationConfig": {
+            "temperature": 0.7,
+            "topK": 40,
+            "topP": 0.95,
+            "maxOutputTokens": 1024,
         }
     }
 
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=20)
+        response = requests.post(url, json=payload, timeout=30)
+        print(f"📡 Gemini API status: {response.status_code}")
 
         if response.status_code == 200:
             data = response.json()
-            if isinstance(data, list) and len(data) > 0:
-                if 'generated_text' in data[0]:
-                    return data[0]['generated_text']
+            if 'candidates' in data and len(data['candidates']) > 0:
+                if 'content' in data['candidates'][0]:
+                    parts = data['candidates'][0]['content'].get('parts', [])
+                    if len(parts) > 0:
+                        return parts[0].get('text', '').strip()
+
+        print(f"❌ Gemini API error: {response.text}")
         return None
 
     except Exception as e:
-        print(f"Hugging Face error: {e}")
+        print(f"💥 Gemini API exception: {e}")
         return None
 
+def call_deepseek_api(prompt):
+    """
+    DeepSeek API - FREE alternative
+    """
+    try:
+        # Using DeepSeek's free API
+        url = "https://api.deepseek.com/chat/completions"
+        headers = {
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "deepseek-chat",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a helpful programming tutor. Provide clear explanations with code examples when relevant."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "stream": False
+        }
 
+        response = requests.post(url, json=payload, headers=headers, timeout=30)
+
+        if response.status_code == 200:
+            data = response.json()
+            return data['choices'][0]['message']['content']
+        return None
+
+    except Exception as e:
+        print(f"DeepSeek API error: {e}")
+        return None
