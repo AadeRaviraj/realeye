@@ -1,50 +1,44 @@
 from flask import Blueprint, request, jsonify
-from app.services.ai_services import save_message, get_chat_history, get_ai_response, get_user_message_count_today
+from app.services.ai_service import (
+    save_message,
+    get_chat_history,
+    get_ai_response,
+    get_user_message_count_today,
+)
 
 chat_bp = Blueprint("chat_bp", __name__)
 
 @chat_bp.route("/send", methods=["POST"])
 def send_message():
-    data = request.get_json() or {}
-    user_id = data.get("user_id")
-    message = data.get("message", "").strip()
+    try:
+        data = request.get_json() or {}
+        user_id = data.get("user_id")
+        message = data.get("message", "").strip()
 
-    if not message or not user_id:
-        return jsonify({"error": "Message and user_id are required"}), 400
+        if not message:
+            return jsonify({"error": "Message is required"}), 400
+        if not user_id:
+            return jsonify({"error": "User ID is required"}), 400
 
-    save_message(user_id, message, "user")
-    ai_reply = get_ai_response(message, user_id)
-    save_message(user_id, ai_reply, "ai")
+        save_message(user_id, message, "user")
 
-    usage = get_user_message_count_today(user_id)
+        ai_reply = get_ai_response(message, user_id)
+        save_message(user_id, ai_reply, "ai")
 
-    return jsonify({
-        "reply": ai_reply,
-        "user_id": user_id,
-        "daily_usage": usage,
-        "remaining_messages": max(0, 100 - usage),
-        "status": "success"
-    })
+        usage = get_user_message_count_today(user_id)
 
-@chat_bp.route("/history", methods=["GET"])
-def history():
-    user_id = request.args.get("user_id")
-    if not user_id:
-        return jsonify({"error": "user_id required"}), 400
+        return jsonify({
+            "reply": ai_reply,
+            "user_id": user_id,
+            "daily_usage": usage,
+            "remaining_messages": max(0, 100 - usage),
+            "status": "success"
+        })
 
-    messages = get_chat_history(user_id)
-    return jsonify({"messages": messages})
-
-@chat_bp.route("/usage", methods=["GET"])
-def get_usage():
-    user_id = request.args.get("user_id")
-    if not user_id:
-        return jsonify({"error": "user_id required"}), 400
-
-    usage = get_user_message_count_today(user_id)
-    return jsonify({
-        "user_id": user_id,
-        "daily_messages_used": usage,
-        "daily_limit": 100,
-        "remaining_messages": max(0, 100 - usage)
-    })
+    except Exception as e:
+        print(f"💥 Chat send error: {e}")
+        return jsonify({
+            "error": "Server error",
+            "reply": "AI is having trouble right now. Please try again.",
+            "status": "error"
+        }), 500
