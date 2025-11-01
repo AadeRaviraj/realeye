@@ -508,7 +508,6 @@
 #         print(f"Error parsing response: {e}")
 #         return None
 
-
 from astrapy import DataAPIClient
 from app.config import Config
 import requests
@@ -517,10 +516,9 @@ import datetime
 import os
 import json
 
-# Astra DB Client Setup
+# ------------------ ASTRA DB SETUP ------------------
 client = DataAPIClient(Config.ASTRA_DB_APPLICATION_TOKEN)
 db = client.get_database_by_api_endpoint(Config.ASTRA_DB_API_ENDPOINT)
-
 collection_name = "chat_history"
 
 try:
@@ -529,6 +527,8 @@ except Exception:
     db.create_collection(collection_name)
     chat_collection = db.get_collection(collection_name)
 
+
+# ------------------ CHAT HISTORY FUNCTIONS ------------------
 def save_message(user_id, message, sender):
     if not user_id:
         user_id = "anonymous"
@@ -547,6 +547,7 @@ def save_message(user_id, message, sender):
     except Exception as e:
         print(f"Database error: {e}")
         return False
+
 
 def get_chat_history(user_id, limit=50):
     if not user_id:
@@ -570,6 +571,7 @@ def get_chat_history(user_id, limit=50):
         print(f"Error getting history: {e}")
         return []
 
+
 def get_user_message_count_today(user_id):
     if not user_id:
         return 0
@@ -588,112 +590,110 @@ def get_user_message_count_today(user_id):
     except Exception:
         return 0
 
+
+# ------------------ AI LOGIC ------------------
 def get_ai_response(prompt, user_id=None):
     """
-    USE GOOGLE GEMINI API - FREE & RELIABLE
+    AI Response Manager – Gemini → DeepSeek → Fallback text
     """
     # Daily limit check
     if user_id and get_user_message_count_today(user_id) >= 100:
         return "You've reached your daily message limit. Try again tomorrow!"
 
-    # Try Google Gemini API (FREE)
+    # Try Gemini
     gemini_response = call_gemini_api(prompt)
     if gemini_response:
-        return gemini_response
+        return gemini_response.strip()
 
-    # If Gemini fails, try another free API
+    # Try DeepSeek fallback
     deepseek_response = call_deepseek_api(prompt)
     if deepseek_response:
-        return deepseek_response
+        return deepseek_response.strip()
 
-    # Final fallback - simple but helpful
-    return "I'm here to help you learn programming! Ask me about Java, Python, C++, data types, variables, OOP concepts, algorithms, or any programming topic."
+    # Last fallback
+    return "I'm your AI programming tutor. Ask me about Java, Python, Flutter, or algorithms!"
 
+
+# ------------------ GEMINI API ------------------
 def call_gemini_api(prompt):
-    """
-    Google Gemini API - FREE and reliable
-    """
     api_key = os.getenv("GEMINI_API_KEY")
 
     if not api_key:
-        print("❌ Gemini API key not found")
+        print("❌ Gemini API key missing in environment variables")
         return None
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
+    # ✅ Use the stable v1 endpoint
+    url = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
 
     payload = {
         "contents": [
             {
-                "parts": [
-                    {
-                        "text": f"""You are StudyBot, an AI programming tutor. Provide clear, educational responses about programming concepts.
-
-User question: {prompt}
-
-Please provide a helpful, detailed explanation with code examples if relevant. Be friendly and educational."""
-                    }
-                ]
+                "role": "user",
+                "parts": [{"text": f"You are StudyBot, a friendly AI programming tutor.\n\nQuestion: {prompt}"}]
             }
         ],
         "generationConfig": {
             "temperature": 0.7,
             "topK": 40,
             "topP": 0.95,
-            "maxOutputTokens": 1024,
+            "maxOutputTokens": 1024
         }
     }
 
     try:
-        response = requests.post(url, json=payload, timeout=30)
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
         print(f"📡 Gemini API status: {response.status_code}")
 
         if response.status_code == 200:
             data = response.json()
-            if 'candidates' in data and len(data['candidates']) > 0:
-                if 'content' in data['candidates'][0]:
-                    parts = data['candidates'][0]['content'].get('parts', [])
-                    if len(parts) > 0:
-                        return parts[0].get('text', '').strip()
+            # Gemini responses can have nested structures — handle both possible formats
+            candidates = data.get("candidates", [])
+            if candidates:
+                parts = candidates[0].get("content", {}).get("parts", [])
+                if parts and "text" in parts[0]:
+                    return parts[0]["text"]
 
-        print(f"❌ Gemini API error: {response.text}")
-        return None
+            # Fallback for older Gemini responses
+            if "output_text" in data:
+                return data["output_text"]
+
+            print("⚠️ Gemini response did not include text content.")
+        else:
+            print(f"❌ Gemini API error: {response.text}")
 
     except Exception as e:
         print(f"💥 Gemini API exception: {e}")
-        return None
 
+    return None
+
+
+# ------------------ DEEPSEEK API ------------------
 def call_deepseek_api(prompt):
-    """
-    DeepSeek API - FREE alternative
-    """
     try:
-        # Using DeepSeek's free API
         url = "https://api.deepseek.com/chat/completions"
-        headers = {
-            "Content-Type": "application/json"
-        }
+        headers = {"Content-Type": "application/json"}
         payload = {
             "model": "deepseek-chat",
             "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a helpful programming tutor. Provide clear explanations with code examples when relevant."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
+                {"role": "system", "content": "You are a helpful programming tutor."},
+                {"role": "user", "content": prompt}
             ],
             "stream": False
         }
 
         response = requests.post(url, json=payload, headers=headers, timeout=30)
+        print(f"🔄 DeepSeek API status: {response.status_code}")
 
         if response.status_code == 200:
             data = response.json()
-            return data['choices'][0]['message']['content']
-        return None
+            return data.get("choices", [{}])[0].get("message", {}).get("content", "")
 
     except Exception as e:
-        print(f"DeepSeek API error: {e}")
-        return None
+        print(f"⚠️ DeepSeek API error: {e}")
+
+    return None
