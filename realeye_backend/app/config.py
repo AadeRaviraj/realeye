@@ -18,12 +18,5 @@ class Config:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 
-    # HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
-
-
-    # # AI API Keys
-    # OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-    # HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN", "")
-
     # App Settings
     MAX_DAILY_MESSAGES = 100
