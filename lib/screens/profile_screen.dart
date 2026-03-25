@@ -9,10 +9,14 @@ import 'package:confetti/confetti.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import '../design/language_provider.dart';
+import '../models/DailyStat.dart';
 import 'signin_screen.dart';
 import 'dart:io'; // For File
 import 'package:realeyes/design/theme_provider.dart';// import theme class providr form services folder
 import 'package:realeyes/generated/app_localizations.dart';
+import '../models/dashboard_data.dart';
+import '../services/api_service.dart';
+import 'package:flutter/services.dart';
 
 
 
@@ -27,10 +31,11 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen>
 
+
     // handle the click actions
     with SingleTickerProviderStateMixin {
   final _auth = FirebaseAuth.instance;
-
+  String? get _firebaseUid => _auth.currentUser?.uid;
   final _dbRef = FirebaseDatabase.instance.ref().child('users');
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -54,12 +59,31 @@ class _ProfileScreenState extends State<ProfileScreen>
         : const AssetImage('assets/images/angryp_cricle.png');
   }
 
+  DashboardData? _dashboardData;
+  bool _loadingDashboard = false;
+
+  // load dashboard data
+  Future<void> _loadDashboardData() async {
+    final uid = _firebaseUid;
+    if (uid == null) return;
+    setState(() => _loadingDashboard = true);
+    try {
+      final data = await ApiService.fetchDashboard(uid);
+      setState(() {
+        _dashboardData = data;
+        _loadingDashboard = false;
+      });
+    } catch (e) {
+      print('Error loading dashboard: $e');
+      setState(() => _loadingDashboard = false);
+    }
+  }
 
   @override
   void initState() {
     super.initState();
- //  _loadUserData();
     _loadUserData();
+
 
 
     final user = _auth.currentUser;
@@ -79,8 +103,13 @@ class _ProfileScreenState extends State<ProfileScreen>
             _isLoading = false;
           });
         }
+
       });
     }
+
+// Load Dashboard data
+    _loadDashboardData();
+
 
 
     // Initialize animations
@@ -186,16 +215,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ),
 
 
-             // thsi is ciurcular style
-                // child: Hero(
-                //   tag: 'profile-picture',
-                //   child: CircleAvatar(
-                //     radius: 60,
-                //     backgroundImage: _profileImageUrl != null
-                //         ? NetworkImage(_profileImageUrl!)
-                //         : const AssetImage('assets/images/angryp_cricle.png'),
-                //   ),
-                // ),
               ),
             ),
           ),
@@ -621,19 +640,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // TextField(
-                      //   controller: TextEditingController(text: _name),
-                      //   decoration: const InputDecoration(
-                      //     labelText: 'Name',
-                      //     border: OutlineInputBorder(),
-                      //   ),
-                      //   onChanged: (value) {
-                      //     _name = value.trim();
-                      //     setStateDialog(() {
-                      //       _isModified = true; // User change teir name
-                      //     });
-                      //   },
-                      // ),
+
 
                       TextField(
                         controller: _nameController,
@@ -941,15 +948,22 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildProfileTab() {
+    if (_loadingDashboard) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_dashboardData == null) {
+      return const Center(child: Text('Could not load progress'));
+    }
+    final data = _dashboardData!;
     return SingleChildScrollView(
       child: Column(
         children: [
           _UserInfoCard(email: _userEmail),
           const SizedBox(height: 24),
           _CustomProgressCard(
-            progress: 0.6,
+            progress: data.completionPercentage / 100,
             title: 'Learning Progress',
-            subTitle: 'Completed 60% of your goals',
+            subTitle: 'Completed ${data.completionPercentage.toStringAsFixed(1)}% of subtopics',
             onCelebrate: _showAchievementCelebration,
           ),
           const SizedBox(height: 24),
@@ -963,17 +977,47 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
+
   Widget _buildStatsTab() {
+    final uid = _firebaseUid;
+    if (uid == null) return const Center(child: Text('User not logged in'));
+
+    // Use cached data if available
+    if (_dashboardData != null) {
+      return _buildStatsContent(_dashboardData!);
+    }
+
+    // Otherwise fetch
+    return FutureBuilder<DashboardData>(
+      future: ApiService.fetchDashboard(uid),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error loading stats: ${snapshot.error}'));
+        }
+        final data = snapshot.data!;
+        // Cache for later
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              _dashboardData = data;
+            });
+          }
+        });
+        return _buildStatsContent(data);
+      },
+    );
+  }
+
+  Widget _buildStatsContent(DashboardData data) {
     return SingleChildScrollView(
       child: Column(
         children: [
-          _StatsSection(
-            completed: 15,
-            ongoing: 3,
-            points: 420,
-          ),
+          _RealStatsSection(data: data),
           const SizedBox(height: 24),
-          _WeeklyActivityChart(),
+          _WeeklyActivityChart(firebaseUid: _firebaseUid!),
           const SizedBox(height: 24),
           _AchievementBadges(
             onBadgeUnlocked: _showAchievementCelebration,
@@ -983,6 +1027,8 @@ class _ProfileScreenState extends State<ProfileScreen>
       ),
     );
   }
+
+
 
   //in this Widget handle the setting tab  all actions  cards (eg...edit profile , setting , subscription,etc etc)
   Widget _buildSettingsTab() {
@@ -1115,10 +1161,12 @@ class _UserInfoCard extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: Icon(Icons.content_copy,
-                  color: Theme.of(context).primaryColor),
+              icon: Icon(Icons.content_copy, color: Theme.of(context).primaryColor),
               onPressed: () {
-                // Copy to clipboard functionality
+                Clipboard.setData(ClipboardData(text: email));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Email copied')),
+                );
               },
             ),
           ],
@@ -1329,60 +1377,117 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-// Weekly Activity Chart Widget
-class _WeeklyActivityChart extends StatelessWidget {
+class _WeeklyActivityChart extends StatefulWidget {
+  final String firebaseUid;
+  const _WeeklyActivityChart({required this.firebaseUid});
+
+  @override
+  __WeeklyActivityChartState createState() => __WeeklyActivityChartState();
+}
+
+class __WeeklyActivityChartState extends State<_WeeklyActivityChart> {
+  String _selectedRange = 'week'; // 'week', 'month', 'year'
+  late Future<List<DailyStat>> _statsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStats();
+  }
+
+  void _fetchStats() {
+    _statsFuture = ApiService.fetchDailyStats(widget.firebaseUid, range: _selectedRange);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final data = [
-      {'label': 'Mon', 'value': 8},
-      {'label': 'Tue', 'value': 12},
-      {'label': 'Wed', 'value': 6},
-      {'label': 'Thu', 'value': 10},
-      {'label': 'Fri', 'value': 14},
-      {'label': 'Sat', 'value': 8},
-      {'label': 'Sun', 'value': 4},
-    ];
-    final maxValue = data.map((e) => e['value'] as int).reduce((a, b) => a > b ? a : b);
-
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Weekly Activity',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Activity',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+                DropdownButton<String>(
+                  value: _selectedRange,
+                  items: const [
+                    DropdownMenuItem(value: 'week', child: Text('Last 7 days')),
+                    DropdownMenuItem(value: 'month', child: Text('Last 30 days')),
+                    DropdownMenuItem(value: 'year', child: Text('Last 12 months')),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedRange = value!;
+                      _fetchStats();
+                    });
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              height: 150, // max height of chart area (can be changed or made flexible)
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: data.map((entry) {
-                  final value = entry['value'] as int;
-                  final label = entry['label'] as String;
-                  return _ChartBar(
-                    label: label,
-                    value: value,
-                    heightFactor: value / maxValue,
-                  );
-                }).toList(),
-              ),
+            FutureBuilder<List<DailyStat>>(
+              future: _statsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                final stats = snapshot.data!;
+                if (stats.isEmpty) {
+                  return const Center(child: Text('No activity yet'));
+                }
+                // Find max minutes for scaling
+                int maxMinutes = stats.map((e) => e.minutes).reduce((a, b) => a > b ? a : b);
+                return SizedBox(
+                  height: 150,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: stats.map((stat) {
+                      double factor = maxMinutes == 0 ? 0 : stat.minutes / maxMinutes;
+                      return _ChartBar(
+                        label: _formatDate(stat.date),
+                        value: stat.minutes,
+                        heightFactor: factor,
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    if (_selectedRange == 'week') {
+      // Show day of week
+      const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      return weekdays[date.weekday - 1];
+    } else if (_selectedRange == 'month') {
+      // Show day of month
+      return '${date.day}';
+    } else {
+      // Show month abbreviation
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return months[date.month - 1];
+    }
   }
 }
 
@@ -2115,6 +2220,95 @@ class SettingScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 16),
             _AppSettings(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RealStatsSection extends StatelessWidget {
+  final DashboardData data;
+
+  const _RealStatsSection({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 1.2,
+      children: [
+        _buildStatCard(
+          'Today',
+          '${data.todayMinutes} min',
+          Icons.today,
+          Colors.blue,
+        ),
+        _buildStatCard(
+          'Weekly',
+          '${data.weeklyMinutes} min',
+          Icons.date_range,
+          Colors.green,
+        ),
+        _buildStatCard(
+          'Monthly',
+          '${data.monthlyMinutes} min',
+          Icons.calendar_month,
+          Colors.purple,
+        ),
+        _buildStatCard(
+          'Completion',
+          '${data.completionPercentage.toStringAsFixed(1)}%',
+          Icons.check_circle,
+          Colors.orange,
+        ),
+        _buildStatCard(
+          'Accuracy',
+          '${data.accuracyPercentage.toStringAsFixed(1)}%',
+          Icons.verified,
+          Colors.pink,
+        ),
+        _buildStatCard(
+          'Streak',
+          '${data.streak} days',
+          Icons.whatshot,
+          Colors.red,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+              ),
+            ),
           ],
         ),
       ),

@@ -36,7 +36,7 @@ def send_message():
         })
 
     except Exception as e:
-        print(f"💥 Chat send error: {e}")
+        print(f" Chat send error: {e}")
         return jsonify({
             "error": "Server error",
             "reply": "AI is having trouble right now. Please try again.",

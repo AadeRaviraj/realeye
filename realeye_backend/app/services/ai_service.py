@@ -1,325 +1,166 @@
-# from astrapy import DataAPIClient
-# from app.config import Config
-# import requests
-# import time
-# import datetime
-#
-# # ------------------ ASTRA DB ------------------
-# client = DataAPIClient(Config.ASTRA_DB_APPLICATION_TOKEN)
-# db = client.get_database_by_api_endpoint(Config.ASTRA_DB_API_ENDPOINT)
-# collection_name = "chat_history"
-#
-# try:
-#     chat_collection = db.get_collection(collection_name)
-# except Exception:
-#     db.create_collection(collection_name)
-#     chat_collection = db.get_collection(collection_name)
-#
-# # ------------------ CHAT HISTORY ------------------
-# def save_message(user_id, message, sender):
-#     if not user_id:
-#         user_id = "anonymous"
-#
-#     doc = {
-#         "user_id": user_id,
-#         "message": message,
-#         "sender": sender,
-#         "created_at": int(time.time() * 1000),
-#         "timestamp": datetime.datetime.now().isoformat()
-#     }
-#
-#     try:
-#         chat_collection.insert_one(doc)
-#         return True
-#     except Exception as e:
-#         print(f"Database error: {e}")
-#         return False
-#
-# def get_chat_history(user_id, limit=50):
-#     if not user_id:
-#         return []
-#
-#     try:
-#         cursor = chat_collection.find(
-#             {"user_id": user_id},
-#             sort={"created_at": -1},
-#             limit=limit
-#         )
-#         docs = sorted(list(cursor), key=lambda x: x.get("created_at", 0))
-#         return [{"sender": d.get("sender"), "message": d.get("message"), "timestamp": d.get("timestamp")} for d in docs]
-#     except Exception as e:
-#         print(f"Error getting history: {e}")
-#         return []
-#
-# def get_user_message_count_today(user_id):
-#     if not user_id:
-#         return 0
-#
-#     try:
-#         today_ts = int(datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000)
-#         cursor = chat_collection.find({"user_id": user_id, "sender": "user", "created_at": {"$gte": today_ts}})
-#         return len(list(cursor))
-#     except Exception as e:
-#         print(f"Error counting messages: {e}")
-#         return 0
-#
-# # ------------------ AI RESPONSE ------------------
-# def get_ai_response(prompt, user_id=None):
-#     if user_id and get_user_message_count_today(user_id) >= Config.MAX_DAILY_MESSAGES:
-#         return "You've reached your daily message limit. Try again tomorrow!"
-#
-#     gemini_resp = call_gemini_api(prompt)
-#     if gemini_resp:
-#         return gemini_resp.strip()
-#
-#     deepseek_resp = call_deepseek_api(prompt)
-#     if deepseek_resp:
-#         return deepseek_resp.strip()
-#
-#     return "I'm your AI programming tutor. Ask me about Python, Java, Flutter, or algorithms."
-#
-# # ------------------ GEMINI ------------------
-# def call_gemini_api(prompt):
-#     api_key = Config.GEMINI_API_KEY
-#     if not api_key:
-#         print("❌ Gemini API key missing")
-#         return None
-#
-#     url = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"
-#     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
-#     payload = {
-#         "contents": [{"role": "user", "parts": [{"text": f"You are StudyBot, a friendly AI programming tutor.\n\nQuestion: {prompt}"}]}],
-#         "generationConfig": {"temperature": 0.7, "topK": 40, "topP": 0.95, "maxOutputTokens": 1024}
-#     }
-#
-#     try:
-#         resp = requests.post(url, headers=headers, json=payload, timeout=30)
-#         if resp.status_code == 200:
-#             data = resp.json()
-#             candidates = data.get("candidates", [])
-#             if candidates:
-#                 parts = candidates[0].get("content", {}).get("parts", [])
-#                 if parts and "text" in parts[0]:
-#                     return parts[0]["text"]
-#             if "output_text" in data:
-#                 return data["output_text"]
-#     except Exception as e:
-#         print(f"Gemini API error: {e}")
-#     return None
-#
-# # ------------------ DEEPSEEK ------------------
-# def call_deepseek_api(prompt):
-#     try:
-#         url = "https://api.deepseek.com/chat/completions"
-#         headers = {"Content-Type": "application/json"}
-#         payload = {
-#             "model": "deepseek-chat",
-#             "messages": [{"role": "system", "content": "You are a helpful programming tutor."},
-#                          {"role": "user", "content": prompt}],
-#             "stream": False
-#         }
-#         resp = requests.post(url, json=payload, headers=headers, timeout=30)
-#         if resp.status_code == 200:
-#             data = resp.json()
-#             return data.get("choices", [{}])[0].get("message", {}).get("content", "")
-#     except Exception as e:
-#         print(f"DeepSeek API error: {e}")
-#     return None
-
-
 from astrapy import DataAPIClient
 from app.config import Config
-import google.generativeai as genai
 import requests
 import time
 import datetime
-import os
-import json
 import logging
 
 # --------------------------------------------------------
-# ✅ Logging setup
+# Logging
 # --------------------------------------------------------
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("AIService")
 
 # --------------------------------------------------------
-# ✅ Astra DB Client Setup
+# Astra DB Setup
 # --------------------------------------------------------
 client = DataAPIClient(Config.ASTRA_DB_APPLICATION_TOKEN)
 db = client.get_database_by_api_endpoint(Config.ASTRA_DB_API_ENDPOINT)
-collection_name = "chat_history"
 
-try:
-    chat_collection = db.get_collection(collection_name)
-except Exception:
-    db.create_collection(collection_name)
-    chat_collection = db.get_collection(collection_name)
+# Collections
+users_collection = db.get_collection("users")
+chat_collection = db.get_collection("chat_history")
 
 # --------------------------------------------------------
-# ✅ Google Gemini Setup
+# Groq API Setup
 # --------------------------------------------------------
-GEMINI_API_KEY = Config.GEMINI_API_KEY
-if not GEMINI_API_KEY:
-    raise ValueError("❌ GEMINI_API_KEY missing in environment variables!")
+GROQ_API_KEY = Config.GROQ_API_KEY
 
-try:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-2.0-flash-001")
-    logger.info("✅ Gemini configured successfully with gemini-2.0-flash-001")
-except Exception as e:
-    logger.error(f"Gemini configuration failed: {str(e)}")
-    model = None
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY missing!")
 
 # --------------------------------------------------------
-# ✅ Database Functions
+# USER FUNCTIONS
 # --------------------------------------------------------
-def save_message(user_id, message, sender):
-    if not user_id:
-        user_id = "anonymous"
+def get_user(user_id):
+    user = users_collection.find_one({"user_id": user_id})
 
+    if not user:
+        user = {
+            "user_id": user_id,
+            "is_pro": False,
+            "daily_count": 0,
+            "last_reset": str(datetime.date.today())
+        }
+        users_collection.insert_one(user)
+
+    return user
+
+
+def update_user(user_id, data):
+    users_collection.update_one(
+        {"user_id": user_id},
+        {"$set": data}
+    )
+
+# --------------------------------------------------------
+# CHAT STORAGE (LIMITED)
+# --------------------------------------------------------
+def save_message(user_id, question, answer):
     doc = {
         "user_id": user_id,
-        "message": message,
-        "sender": sender,
-        "created_at": int(time.time() * 1000),
-        "timestamp": datetime.datetime.now().isoformat()
+        "question": question,
+        "answer": answer,
+        "created_at": int(time.time() * 1000)
     }
 
     try:
         chat_collection.insert_one(doc)
-        return True
-    except Exception as e:
-        logger.error(f"Database error: {e}")
-        return False
 
-
-def get_chat_history(user_id, limit=50):
-    if not user_id:
-        return []
-
-    try:
-        cursor = chat_collection.find(
+        # Keep only last 50 messages
+        messages = list(chat_collection.find(
             {"user_id": user_id},
-            sort={"created_at": -1},
-            limit=limit
-        )
-        docs = list(cursor)
-        docs.sort(key=lambda x: x.get("created_at", 0))
+            sort={"created_at": -1}
+        ))
 
-        return [{
-            "sender": d.get("sender"),
-            "message": d.get("message"),
-            "timestamp": d.get("timestamp")
-        } for d in docs]
+        if len(messages) > 50:
+            for msg in messages[50:]:
+                chat_collection.delete_one({"_id": msg["_id"]})
+
     except Exception as e:
-        logger.error(f"Error getting history: {e}")
-        return []
+        logger.error(f"Save error: {e}")
 
-
-def get_user_message_count_today(user_id):
-    if not user_id:
-        return 0
-
+# --------------------------------------------------------
+# CACHE (VERY IMPORTANT)
+# --------------------------------------------------------
+def check_cache(question):
     try:
-        today = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        today_timestamp = int(today.timestamp() * 1000)
-
-        cursor = chat_collection.find({
-            "user_id": user_id,
-            "sender": "user",
-            "created_at": {"$gte": today_timestamp}
-        })
-
-        return len(list(cursor))
+        doc = chat_collection.find_one({"question": question})
+        if doc:
+            return doc.get("answer")
     except Exception:
-        return 0
-
-# --------------------------------------------------------
-# ✅ AI Logic
-# --------------------------------------------------------
-def get_ai_response(prompt, user_id=None):
-    """Main AI response handler"""
-    # Rate limit check
-    if user_id and get_user_message_count_today(user_id) >= 100:
-        return "⚠️ You've reached your daily message limit. Try again tomorrow!"
-
-    # Try Gemini first
-    try:
-        if model:
-            response = model.generate_content(prompt)
-            ai_reply = response.text.strip()
-            logger.info(f"🧠 Gemini success: {ai_reply[:100]}...")
-            return ai_reply
-    except Exception as e:
-        logger.error(f"Gemini SDK error: {str(e)}")
-
-    # Try Gemini REST API fallback
-    try:
-        api_reply = call_gemini_rest_api(prompt)
-        if api_reply:
-            return api_reply
-    except Exception as e:
-        logger.error(f"Gemini REST fallback failed: {e}")
-
-    # DeepSeek as secondary fallback
-    try:
-        ds_reply = call_deepseek_api(prompt)
-        if ds_reply:
-            return ds_reply
-    except Exception as e:
-        logger.error(f"DeepSeek fallback failed: {e}")
-
-    # Final fallback
-    return "I'm your AI tutor! Ask me about programming, Flutter, Python, or any computer science topic."
-
-# --------------------------------------------------------
-# ✅ REST API Fallback for Gemini
-# --------------------------------------------------------
-def call_gemini_rest_api(prompt):
-    api_key = GEMINI_API_KEY
-    if not api_key:
         return None
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.7, "maxOutputTokens": 1024}
+# --------------------------------------------------------
+# GROQ API CALL
+# --------------------------------------------------------
+def call_groq(prompt):
+    url = "https://api.groq.com/openai/v1/chat/completions"
+
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "llama-3.1-8b-instant",
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are an interview preparation assistant. Answer clearly with simple explanations and examples."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
     }
 
     try:
-        response = requests.post(url, json=payload, timeout=30)
-        logger.info(f"📡 Gemini REST status: {response.status_code}")
+        response = requests.post(url, headers=headers, json=data, timeout=10)
 
         if response.status_code == 200:
-            data = response.json()
-            if "candidates" in data and len(data["candidates"]) > 0:
-                parts = data["candidates"][0]["content"]["parts"]
-                return parts[0].get("text", "").strip()
-        logger.error(f"Gemini REST error: {response.text}")
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+
+        return "Error generating response."
+
     except Exception as e:
-        logger.error(f"Gemini REST exception: {e}")
-    return None
+        logger.error(f"Groq API error: {e}")
+        return "Service temporarily unavailable."
+
+
 
 # --------------------------------------------------------
-# ✅ DeepSeek API fallback
+# MAIN CHAT FUNCTION (CORE LOGIC)
 # --------------------------------------------------------
-def call_deepseek_api(prompt):
-    try:
-        url = "https://api.deepseek.com/chat/completions"
-        headers = {"Content-Type": "application/json"}
-        payload = {
-            "model": "deepseek-chat",
-            "messages": [
-                {"role": "system", "content": "You are a friendly programming tutor."},
-                {"role": "user", "content": prompt}
-            ],
-            "stream": False
-        }
-        response = requests.post(url, json=payload, headers=headers, timeout=20)
-        if response.status_code == 200:
-            data = response.json()
-            return data["choices"][0]["message"]["content"]
-    except Exception as e:
-        logger.error(f"DeepSeek API error: {e}")
-    return None
+def get_ai_response(user_id, prompt):
+    user = get_user(user_id)
+
+    # Reset daily count
+    today = str(datetime.date.today())
+    if user.get("last_reset") != today:
+        user["daily_count"] = 0
+        user["last_reset"] = today
+
+    #  FREE LIMIT CHECK
+    if not user["is_pro"] and user["daily_count"] >= 5:
+        return {"status": "LIMIT_EXCEEDED"}
+
+    #  CACHE CHECK
+    cached = check_cache(prompt)
+    if cached:
+        logger.info("Cache hit")
+        return {"status": "OK", "response": cached}
+
+    #  CALL AI
+    reply = call_groq(prompt)
+
+    #  SAVE
+    save_message(user_id, prompt, reply)
+
+    #  UPDATE COUNT
+    user["daily_count"] += 1
+    update_user(user_id, user)
+
+    return {"status": "OK", "response": reply}

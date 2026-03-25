@@ -12,6 +12,7 @@ import 'design/theme_provider.dart'; // theme provider
 import 'design/language_provider.dart'; // language provider
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:realeyes/generated/app_localizations.dart';
+import 'package:realeyes/services/notification_service.dart';
 
 
 
@@ -19,6 +20,7 @@ import 'package:realeyes/generated/app_localizations.dart';
 void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
+
   print("Using renderer: ${ui.PlatformDispatcher.instance.implicitView?.renderingBackend}");
 
   final languageProvider = LanguageProvider();
@@ -31,6 +33,7 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     print("Firebase initialized successfully");
+    await NotificationService().initialize();
     runApp(
       // ChangeNotifierProvider(
       //   create: (_) => ThemeProvider(),

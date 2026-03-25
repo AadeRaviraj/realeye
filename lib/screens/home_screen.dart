@@ -4,9 +4,11 @@ import 'package:firebase_database/firebase_database.dart';
 import 'signin_screen.dart';
 import 'InterviewPrep_screen.dart';
 import 'faceDetection_screen.dart';
-import 'profile_screen.dart';
+// import 'profile_screen.dart';
+import 'package:realeyes/features/profile/screens/profile_screen.dart';
 import 'study_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:realeyes/screens/exit_review_handler.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -170,8 +172,9 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return ExitReviewHandler(
+      // child :
+      // onWillPop: _onWillPop,
       child: Scaffold(
         // Add conditional AppBar for non-home screens
         appBar: _selectedIndex != 0
