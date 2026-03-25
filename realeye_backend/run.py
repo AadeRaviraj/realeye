@@ -14,10 +14,10 @@ if __name__ == "__main__":
     import os
     port = int(os.environ.get('PORT', 5000))
 
-    print("🚀 Starting Realeye Study App Backend...")
-    print(f"📍 Environment: {'Production' if not app.debug else 'Development'}")
-    print(f"🔗 Port: {port}")
-    print("📚 Features: AI Chat, Study Materials, Progress Tracking")
+    print(" Starting Realeye Study App Backend...")
+    print(f" Environment: {'Production' if not app.debug else 'Development'}")
+    print(f" Port: {port}")
+    print(" Features: AI Chat, Study Materials, Progress Tracking")
 
     app.run(host='0.0.0.0', port=port, debug=False)
 

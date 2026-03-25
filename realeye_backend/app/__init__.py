@@ -17,7 +17,7 @@ def create_app():
     def home():
         return jsonify({
             "status": "success",
-            "message": "Realeye Study App Backend is running successfully! 🚀",
+            "message": "Realeye Study App Backend is running successfully! ",
             "version": "2.0",
             "features": ["AI Chat Assistant", "Daily Message Limits"],
             "endpoints": {

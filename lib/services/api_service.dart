@@ -189,7 +189,7 @@ class ApiService {
     required String message,
   }) async {
     final response = await http.post(
-      Uri.parse("${ApiConfig.baseUrl}/chat"),
+      Uri.parse("${ApiConfig.baseUrl}/send"), //  Fixed endpoint
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         "user_id": userId,

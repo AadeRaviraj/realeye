@@ -167,15 +167,11 @@
 // }
 
 
-// ============================================================
-// File     : lib/widgets/ai_chat_fab.dart
-// Description: Floating AI chatbot with full logic inside
-// ============================================================
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
+import 'package:realeyes/Config/ai_api_config.dart';
 
 class AIChatFab extends StatefulWidget {
   const AIChatFab({Key? key}) : super(key: key);
@@ -267,7 +263,45 @@ class _ChatBottomSheetState extends State<_ChatBottomSheet> {
 
   List<Map<String, dynamic>> messages = [];
   bool isLoading = false;
-  int remainingMessages = 15;
+  int remainingMessages = 5; // Free tier limit
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    try {
+      final url = Uri.parse("${AiApiConfig.baseUrl}/history");
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({"user_id": widget.userId}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> history = data['history'] ?? [];
+        setState(() {
+          messages = history
+              .expand((item) => [
+            {"msg": item['question'], "isUser": true},
+            {"msg": item['answer'], "isUser": false},
+          ])
+              .toList();
+        });
+        // Scroll to bottom after loading
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        });
+      } else {
+        print("History load failed: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Failed to load history: $e");
+    }
+  }
 
   Future<void> sendMessage() async {
     String text = _controller.text.trim();
@@ -280,26 +314,37 @@ class _ChatBottomSheetState extends State<_ChatBottomSheet> {
     });
 
     try {
+      final url = Uri.parse("${AiApiConfig.baseUrl}/send");
       final response = await http.post(
-        Uri.parse("https://realeye-backend.onrender.com/chat"),
+        url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           "user_id": widget.userId,
           "message": text,
         }),
-      );
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode != 200) {
+        setState(() {
+          messages.add({
+            "msg": "Server error (${response.statusCode}). Please try again later.",
+            "isUser": false
+          });
+        });
+        return;
+      }
 
       final data = jsonDecode(response.body);
 
       if (data["error"] == "LIMIT_EXCEEDED") {
         setState(() {
           messages.add({
-            "msg": "Daily limit reached",
+            "msg": "Daily limit reached. Upgrade to Pro for unlimited messages.",
             "isUser": false
           });
           remainingMessages = 0;
         });
-      } else {
+      } else if (data.containsKey("response")) {
         setState(() {
           messages.add({
             "msg": data["response"],
@@ -307,25 +352,31 @@ class _ChatBottomSheetState extends State<_ChatBottomSheet> {
           });
           remainingMessages = data["remaining"] ?? 0;
         });
+      } else {
+        setState(() {
+          messages.add({
+            "msg": "Unexpected response from server.",
+            "isUser": false
+          });
+        });
       }
     } catch (e) {
+      print("Error in sendMessage: $e");
       setState(() {
         messages.add({
-          "msg": "Server error",
+          "msg": "Server error. Please check your internet connection and try again.",
           "isUser": false
         });
       });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+      // Auto-scroll to latest message
+      Future.delayed(const Duration(milliseconds: 200), () {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      });
     }
-
-    setState(() {
-      isLoading = false;
-    });
-
-    Future.delayed(const Duration(milliseconds: 200), () {
-      _scrollController.jumpTo(
-        _scrollController.position.maxScrollExtent,
-      );
-    });
   }
 
   @override
@@ -351,24 +402,19 @@ class _ChatBottomSheetState extends State<_ChatBottomSheet> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-
             const SizedBox(height: 10),
-
             const Text("AI Assistant",
                 style: TextStyle(fontWeight: FontWeight.bold)),
-
-            // Text("Remaining: $remainingMessages",
-            //     style: const TextStyle(fontSize: 12)),
-
+            if (remainingMessages > 0 && remainingMessages <= 5)
+              Text("$remainingMessages messages left today",
+                  style: const TextStyle(fontSize: 12)),
             const Divider(),
-
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
                 itemCount: messages.length,
                 itemBuilder: (context, index) {
                   final msg = messages[index];
-
                   return Align(
                     alignment: msg["isUser"]
                         ? Alignment.centerRight
@@ -385,9 +431,7 @@ class _ChatBottomSheetState extends State<_ChatBottomSheet> {
                       child: Text(
                         msg["msg"],
                         style: TextStyle(
-                          color: msg["isUser"]
-                              ? Colors.white
-                              : Colors.black,
+                          color: msg["isUser"] ? Colors.white : Colors.black,
                         ),
                       ),
                     ),
@@ -395,13 +439,11 @@ class _ChatBottomSheetState extends State<_ChatBottomSheet> {
                 },
               ),
             ),
-
             if (isLoading)
               const Padding(
                 padding: EdgeInsets.all(8),
                 child: CircularProgressIndicator(),
               ),
-
             Row(
               children: [
                 Expanded(
