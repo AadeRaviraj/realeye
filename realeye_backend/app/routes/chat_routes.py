@@ -1,10 +1,4 @@
 from flask import Blueprint, request, jsonify
-# from app.services.ai_service import (
-#     save_message,
-#     get_chat_history,
-#     get_ai_response,
-#     get_user_message_count_today,
-# )
 from app.services.ai_service import get_ai_response
 
 chat_bp = Blueprint("chat_bp", __name__)
@@ -26,11 +20,9 @@ def send_message():
 
         ai_reply = ai_data.get("response")
 
-        usage = get_user_message_count_today(user_id)
-
         return jsonify({
             "response": ai_reply,
-            "remaining": max(0, 5 - usage)
+            "remaining": 0
         })
 
     except Exception as e:
