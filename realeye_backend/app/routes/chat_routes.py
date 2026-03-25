@@ -7,10 +7,12 @@ chat_bp = Blueprint("chat_bp", __name__)
 # ---------------- SEND MESSAGE ----------------
 @chat_bp.route("/send", methods=["POST"])
 def send_message():
+
     try:
         data = request.get_json() or {}
         user_id = data.get("user_id")
         message = data.get("message", "").strip()
+
 
         if not user_id:
             return jsonify({"error": "User ID required"}), 400
@@ -32,9 +34,10 @@ def send_message():
         })
 
     except Exception as e:
-        print(f"Chat error: {e}")
+        import traceback
+        # traceback.print_exc()               # prints full traceback to terminal
+        # print(f"Chat error: {e}")
         return jsonify({"error": "Server error"}), 500
-
 
 # ---------------- CHAT HISTORY ----------------
 @chat_bp.route("/history", methods=["POST"])
@@ -53,5 +56,5 @@ def history():
         })
 
     except Exception as e:
-        print(f"History error: {e}")
+        # print(f"History error: {e}")
         return jsonify({"error": "Server error"}), 500

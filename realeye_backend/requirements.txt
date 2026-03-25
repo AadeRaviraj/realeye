@@ -4,6 +4,4 @@ cloudinary
 python-dotenv
 gunicorn
 astrapy
-google-generativeai
 requests 
-

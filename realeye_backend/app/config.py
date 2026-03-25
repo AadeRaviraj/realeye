@@ -11,9 +11,10 @@ CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
 MAX_IMAGE_SIZE_MB = 1
 
 class Config:
-    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+    
     ASTRA_DB_APPLICATION_TOKEN = os.getenv("ASTRA_DB_APPLICATION_TOKEN")
     ASTRA_DB_API_ENDPOINT = os.getenv("ASTRA_DB_API_ENDPOINT")
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
     # # Google Gemini API (FREE)
     # GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")

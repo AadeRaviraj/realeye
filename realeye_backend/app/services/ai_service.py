@@ -152,3 +152,13 @@ def get_ai_response(user_id, prompt):
         "response": reply,
         "remaining": remaining
     }
+    
+# Ensure collections exist
+try:
+    db.create_collection("users")
+except Exception:
+    pass
+try:
+    db.create_collection("chat_history")
+except Exception:
+    pass
