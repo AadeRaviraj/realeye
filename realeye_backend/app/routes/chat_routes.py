@@ -17,28 +17,21 @@ def send_message():
 
         if not message:
             return jsonify({"error": "Message is required"}), 400
-        if not user_id:
-            return jsonify({"error": "User ID is required"}), 400
 
-        save_message(user_id, message, "user")
+        ai_data = get_ai_response(user_id, message)
 
-        ai_reply = get_ai_response(message, user_id)
-        save_message(user_id, ai_reply, "ai")
+        if ai_data.get("status") == "LIMIT_EXCEEDED":
+            return jsonify({"error": "LIMIT_EXCEEDED"}), 200
+
+        ai_reply = ai_data.get("response")
 
         usage = get_user_message_count_today(user_id)
 
         return jsonify({
-            "reply": ai_reply,
-            "user_id": user_id,
-            "daily_usage": usage,
-            "remaining_messages": max(0, 100 - usage),
-            "status": "success"
+            "response": ai_reply,
+            "remaining": max(0, 5 - usage)
         })
 
     except Exception as e:
-        print(f" Chat send error: {e}")
-        return jsonify({
-            "error": "Server error",
-            "reply": "AI is having trouble right now. Please try again.",
-            "status": "error"
-        }), 500
+        print(f"Chat error: {e}")
+        return jsonify({"error": "Server error"}), 500
