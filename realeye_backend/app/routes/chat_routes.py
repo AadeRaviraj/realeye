@@ -1,10 +1,11 @@
 from flask import Blueprint, request, jsonify
-from app.services.ai_service import (
-    save_message,
-    get_chat_history,
-    get_ai_response,
-    get_user_message_count_today,
-)
+# from app.services.ai_service import (
+#     save_message,
+#     get_chat_history,
+#     get_ai_response,
+#     get_user_message_count_today,
+# )
+from app.services.ai_service import get_ai_response
 
 chat_bp = Blueprint("chat_bp", __name__)
 
