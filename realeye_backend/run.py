@@ -19,6 +19,6 @@ if __name__ == "__main__":
     print(f" Port: {port}")
     print(" Features: AI Chat, Study Materials, Progress Tracking")
 
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=False)
 
 
