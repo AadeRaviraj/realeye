@@ -11,6 +11,11 @@ logger = logging.getLogger("AIService")
 # Astra DB
 client = DataAPIClient(Config.ASTRA_DB_APPLICATION_TOKEN)
 db = client.get_database_by_api_endpoint(Config.ASTRA_DB_API_ENDPOINT)
+for col in ["users", "chat_history"]:
+    try:
+        db.create_collection(col)
+    except Exception:
+        pass
 
 users_collection = db.get_collection("users")
 chat_collection = db.get_collection("chat_history")
@@ -39,10 +44,11 @@ def get_user(user_id):
     return user
 
 
-def update_user(user_id, data):
+def update_user(user_id, data): 
+    update_data = {k: v for k, v in data.items() if k != '_id'}
     users_collection.update_one(
         {"user_id": user_id},
-        {"$set": data}
+        {"$set": update_data}
     )
 
 
