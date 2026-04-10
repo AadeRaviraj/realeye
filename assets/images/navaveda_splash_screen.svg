@@ -1,0 +1,85 @@
+<svg width="432" height="432" viewBox="0 0 432 432" xmlns="http://www.w3.org/2000/svg">
+  <!--
+    Android Adaptive Icon Foreground
+    Total canvas: 108dp (432px @4x)
+    Safe zone:    72dp  — content must stay within x=72,y=72 to x=360,y=360
+    Background:   defined separately (navaveda_adaptive_icon_bg.svg)
+    This layer:   N letterform + spiritual marks on transparent bg
+  -->
+  <defs>
+    <linearGradient id="nAdapt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#359df2"/>
+      <stop offset="100%" stop-color="#b42fe5"/>
+    </linearGradient>
+    <filter id="glowA" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <mask id="moonMaskA">
+      <rect width="432" height="432" fill="white"/>
+      <circle cx="320" cy="100" r="21" fill="black"/>
+    </mask>
+  </defs>
+
+  <!-- N Letterform (safe zone: 72–360) -->
+  <polyline points="118,340 118,112 314,330 314,105"
+      fill="none"
+      stroke="url(#nAdapt)"
+      stroke-width="40"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      filter="url(#glowA)"/>
+
+  <!-- Om-arch above N -->
+  <path d="M 130,118 Q 216,84 302,118"
+      fill="none" stroke="#9B6EF3" stroke-width="2.5"
+      stroke-linecap="round" opacity="0.55"/>
+  <circle cx="302" cy="118" r="3" fill="#F5C518" opacity="0.70"/>
+
+  <!-- Third eye on diagonal (midpoint ≈ 216,221) angle≈48.5° -->
+  <g transform="translate(216,221) rotate(48.5)" filter="url(#glowA)">
+    <path d="M -12,0 Q 0,-7 12,0 Q 0,7 -12,0 Z"
+        fill="none" stroke="#F5C518" stroke-width="1.8" opacity="0.90"/>
+    <circle r="4" fill="#FF7722" opacity="0.95"/>
+    <circle r="1.8" fill="#0C1023"/>
+  </g>
+
+  <!-- Tripundra tilak -->
+  <line x1="176" y1="88" x2="256" y2="88"
+      stroke="white" stroke-width="3.5" stroke-linecap="round" opacity="0.42"/>
+  <line x1="180" y1="96" x2="252" y2="96"
+      stroke="white" stroke-width="3.5" stroke-linecap="round" opacity="0.65"/>
+  <line x1="184" y1="104" x2="248" y2="104"
+      stroke="white" stroke-width="3.5" stroke-linecap="round" opacity="0.88"/>
+  <!-- Bindi -->
+  <circle cx="216" cy="112" r="5" fill="#FF4400" opacity="0.95"/>
+  <circle cx="216" cy="112" r="7" fill="none" stroke="#F5C518" stroke-width="1.2" opacity="0.55"/>
+
+  <!-- Crescent moon (Chandra) -->
+  <circle cx="312" cy="100" r="24" fill="#F5C518" opacity="0.92" mask="url(#moonMaskA)"  transform="rotate(-44 250 145)"/>
+
+  <!-- Stars -->
+  <circle cx="356" cy="60" r="2.5" fill="#F5C518" opacity="0.62"/>
+  <circle cx="370" cy="82" r="1.5" fill="#F5C518" opacity="0.42"/>
+  <circle cx="342" cy="46" r="1.8" fill="#F5C518" opacity="0.38"/>
+
+<!--  <line x1="138" y1="289" x2="251" y2="291.1"-->
+<!--      stroke="#568fda" stroke-width="6" stroke-linecap="round" opacity="1.42"/>-->
+
+  <text x="193" y="321.70"
+      text-anchor="middle"
+      font-family="Georgia, serif"
+      font-size="52"
+      font-weight="bold"
+      fill="#568fda"
+      opacity="1"
+      transform="rotate(1 8,65)">
+    वेद
+  </text>
+
+
+
+</svg>

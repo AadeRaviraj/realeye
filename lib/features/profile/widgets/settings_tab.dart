@@ -12,11 +12,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
-import 'package:realeyes/features/profile/providers/profile_provider.dart';
-import 'package:realeyes/features/profile/screens/settings_screen.dart';
-import 'package:realeyes/features/profile/screens/subscription_screen.dart';
-import 'package:realeyes/screens/signin_screen.dart';
-import 'package:realeyes/screens/about_us_screen.dart';
+import 'package:navaveda/features/profile/providers/profile_provider.dart';
+import 'package:navaveda/features/profile/screens/settings_screen.dart';
+import 'package:navaveda/features/profile/screens/subscription_screen.dart';
+import 'package:navaveda/screens/signin_screen.dart';
+import 'package:navaveda/screens/about_us_screen.dart';
 
 class SettingsTab extends StatelessWidget {
   const SettingsTab({Key? key}) : super(key: key);
@@ -68,7 +68,7 @@ class SettingsTab extends StatelessWidget {
             icon: Icons.share_rounded,
             iconColor: const Color(0xFF0466C8),
             label: 'Share App',
-            subtitle: 'Invite friends to Realeye',
+            subtitle: 'Invite friends to Navaveda',
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -125,12 +125,14 @@ class SettingsTab extends StatelessWidget {
             ),
             onPressed: () async {
               Navigator.pop(context);
+              // Sign out from Firebase — this triggers authStateChanges in
+              // ProfileProvider which will automatically clear all user data.
               await FirebaseAuth.instance.signOut();
               if (context.mounted) {
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (_) => SignInScreen()),
-                  (_) => false,
+                      (_) => false,
                 );
               }
             },
@@ -346,8 +348,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     backgroundImage: _imageFile != null
                         ? FileImage(_imageFile!) as ImageProvider
                         : (provider.profileImageUrl != null
-                            ? NetworkImage(provider.profileImageUrl!)
-                            : const AssetImage('assets/images/angryp_cricle.png')),
+                        ? NetworkImage(provider.profileImageUrl!)
+                        : const AssetImage('assets/images/angryp_cricle.png')),
                   ),
                   Positioned(
                     bottom: 0,
@@ -380,32 +382,32 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
           _isUploading
               ? const Center(child: CircularProgressIndicator())
               : Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: const Text('Cancel'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _isModified ? _save : null,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: const Text('Save Changes'),
-                      ),
-                    ),
-                  ],
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Cancel'),
                 ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _isModified ? _save : null,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Save Changes'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

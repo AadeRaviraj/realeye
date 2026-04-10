@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:navaveda/models/modules.dart';
 import '../Config/api_config.dart';
 import '../models/DailyStat.dart';
 import '../models/course.dart';
@@ -25,10 +26,22 @@ class ApiService {
     }
   }
 
-  static Future<List<Topic>> getTopics(int courseId) async {
-    //Load Topic
-    final response = await http.get(Uri.parse("${ApiConfig.baseUrl}/courses/$courseId/topics"));
+  static Future<List<Modules>> getModules(int courseId) async {
+    final response = await http.get(
+      Uri.parse("${ApiConfig.baseUrl}/courses/$courseId/modules"),
+    );
+    if (response.statusCode == 200) {
+      List data = json.decode(response.body);
+      return data.map((e) => Modules.fromJson(e)).toList();
+    } else {
+      throw Exception("Failed to load modules");
+    }
+  }
 
+  static Future<List<Topic>> getTopics(int moduleId) async {
+    final response = await http.get(
+      Uri.parse("${ApiConfig.baseUrl}/modules/$moduleId/topics"),
+    );
     if (response.statusCode == 200) {
       List data = json.decode(response.body);
       return data.map((e) => Topic.fromJson(e)).toList();
@@ -37,17 +50,37 @@ class ApiService {
     }
   }
 
-  static Future<List<Subtopic>> getSubtopics(int topicId,String firebaseUid) async {
-    //Load Subtopic
-    // final response = await http.get(Uri.parse("${ApiConfig.baseUrl}/topics/$topicId/subtopics"));
-    final response = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}/topics/$topicId/subtopics?firebaseUid=$firebaseUid'),
-    );
+  // static Future<List<Subtopic>> getSubtopics(int topicId,String firebaseUid) async {
+  //   //Load Subtopic
+  //   // final response = await http.get(Uri.parse("${ApiConfig.baseUrl}/topics/$topicId/subtopics"));
+  //   final response = await http.get(
+  //     Uri.parse('${ApiConfig.baseUrl}/topics/$topicId/subtopics?firebaseUid=$firebaseUid'),
+  //   );
+  //
+  //   if (response.statusCode == 200) {
+  //     List<dynamic> jsonList = jsonDecode(response.body);
+  //     return jsonList.map((json) => Subtopic.fromJson(json)).toList();
+  //   } else {
+  //     throw Exception('Failed to load subtopics');
+  //   }
+  // }
 
-    if (response.statusCode == 200) {
-      List<dynamic> jsonList = jsonDecode(response.body);
-      return jsonList.map((json) => Subtopic.fromJson(json)).toList();
-    } else {
+  static Future<List<Subtopic>> getSubtopics(int topicId, String firebaseUid) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/topics/$topicId/subtopics?firebaseUid=$firebaseUid');
+    print('Fetching subtopics from: $url');
+    try {
+      final response = await http.get(url);
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      if (response.statusCode == 200) {
+        List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList.map((json) => Subtopic.fromJson(json)).toList();
+      } else {
+        print('Failed to load subtopics: status ${response.statusCode}');
+        throw Exception('Failed to load subtopics');
+      }
+    } catch (e) {
+      print('Exception in getSubtopics: $e');
       throw Exception('Failed to load subtopics');
     }
   }

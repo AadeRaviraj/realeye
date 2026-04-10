@@ -1,0 +1,132 @@
+<svg width="560" height="560" viewBox="0 0 560 560" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="bgS" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%"   stop-color="#0C1023"/>
+    <stop offset="55%"  stop-color="#0F0D38"/>
+    <stop offset="100%" stop-color="#1E082E"/>
+  </linearGradient>
+  <linearGradient id="nS" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%"   stop-color="#5B8AF5"/>
+    <stop offset="100%" stop-color="#A870F8"/>
+  </linearGradient>
+  <radialGradient id="saffS" cx="50%" cy="55%" r="40%">
+    <stop offset="0%"   stop-color="#FF7722" stop-opacity="0.22"/>
+    <stop offset="100%" stop-color="#FF7722" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="glowS" x="-25%" y="-25%" width="150%" height="150%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur"/>
+    <feMerge>
+      <feMergeNode in="blur"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+  <mask id="moonS">
+    <rect width="560" height="560" fill="white"/>
+   <circle cx="360" cy="90" r="24" fill="black"/>
+  </mask>
+</defs>
+
+<!-- Background -->
+<rect width="560" height="560" rx="56" fill="url(#bgS)"/>
+<rect width="560" height="560" rx="56" fill="url(#saffS)"/>
+
+<!-- Sudarshana Chakra (very subtle) -->
+<g transform="translate(280,240)" opacity="0.065" fill="none" stroke="#8AA8FF">
+  <circle r="210" stroke-width="2"/>
+  <circle r="194" stroke-width="1"/>
+  <line y1="-194" y2="-210" stroke-width="2.5" transform="rotate(0)"/>
+  <line y1="-194" y2="-210" stroke-width="2.5" transform="rotate(45)"/>
+  <line y1="-194" y2="-210" stroke-width="2.5" transform="rotate(90)"/>
+  <line y1="-194" y2="-210" stroke-width="2.5" transform="rotate(135)"/>
+  <line y1="-194" y2="-210" stroke-width="2.5" transform="rotate(180)"/>
+  <line y1="-194" y2="-210" stroke-width="2.5" transform="rotate(225)"/>
+  <line y1="-194" y2="-210" stroke-width="2.5" transform="rotate(270)"/>
+  <line y1="-194" y2="-210" stroke-width="2.5" transform="rotate(315)"/>
+  <line y1="-200" y2="-210" stroke-width="1.5" transform="rotate(22.5)"/>
+  <line y1="-200" y2="-210" stroke-width="1.5" transform="rotate(67.5)"/>
+  <line y1="-200" y2="-210" stroke-width="1.5" transform="rotate(112.5)"/>
+  <line y1="-200" y2="-210" stroke-width="1.5" transform="rotate(157.5)"/>
+  <line y1="-200" y2="-210" stroke-width="1.5" transform="rotate(202.5)"/>
+  <line y1="-200" y2="-210" stroke-width="1.5" transform="rotate(247.5)"/>
+  <line y1="-200" y2="-210" stroke-width="1.5" transform="rotate(292.5)"/>
+  <line y1="-200" y2="-210" stroke-width="1.5" transform="rotate(337.5)"/>
+</g>
+
+<!-- Om arch above N -->
+<path d="M 164,140 Q 280,96 396,140"
+      fill="none" stroke="#9B6EF3" stroke-width="3.5" stroke-linecap="round" opacity="0.52"/>
+<circle cx="396" cy="140" r="4.5" fill="#F5C518" opacity="0.65"/>
+
+<!-- N Letterform -->
+<polyline points="160,368 160,136 400,368 400,136"
+          fill="none"
+          stroke="url(#nS)"
+          stroke-width="40"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          filter="url(#glowS)"/>
+
+<!-- Third eye on diagonal center ≈ (280,252), angle 48.5° -->
+<g transform="translate(280,252) rotate(48.5)" filter="url(#glowS)">
+  <path d="M -16,0 Q 0,-9 16,0 Q 0,9 -16,0 Z"
+        fill="none" stroke="#F5C518" stroke-width="2.5" opacity="0.90"/>
+  <circle r="5.5" fill="#FF7722" opacity="0.95"/>
+  <circle r="2.5" fill="#0C1023"/>
+</g>
+
+<!-- Tripundra tilak -->
+<line x1="226" y1="108" x2="334" y2="108" stroke="white" stroke-width="5" stroke-linecap="round" opacity="0.42"/>
+<line x1="230" y1="120" x2="330" y2="120" stroke="white" stroke-width="5" stroke-linecap="round" opacity="0.65"/>
+<line x1="236" y1="132" x2="324" y2="132" stroke="white" stroke-width="5" stroke-linecap="round" opacity="0.88"/>
+<circle cx="280" cy="144" r="7" fill="#FF4400" opacity="0.95"/>
+<circle cx="280" cy="144" r="9.5" fill="none" stroke="#F5C518" stroke-width="1.8" opacity="0.55"/>
+
+<!-- Crescent moon -->
+<!-- Crescent moon (Mahadev style tilted) -->
+<g transform="rotate(-35 350 84)">
+  <circle cx="351" cy="90" r="27"
+          fill="#F5C518"
+          opacity="0.95"
+          mask="url(#moonS)"/>
+</g>
+<circle cx="440" cy="62" r="3.5" fill="#F5C518" opacity="0.60"/>
+<circle cx="458" cy="88" r="2.5" fill="#F5C518" opacity="0.40"/>
+<circle cx="422" cy="44" r="2.8" fill="#F5C518" opacity="0.36"/>
+
+<!-- ─── WORDMARK ─── -->
+<!-- Gold accent line above text -->
+<line x1="152" y1="416" x2="408" y2="416" stroke="#F5C518" stroke-width="1" opacity="0.22"/>
+
+<!-- App name -->
+<text x="280" y="460"
+      text-anchor="middle"
+      font-family="Georgia, 'Times New Roman', serif"
+      font-size="54"
+      font-weight="bold"
+      letter-spacing="3"
+      fill="#E8F0FE">NavaVeda</text>
+
+<!-- Sanskrit gloss -->
+<text x="280" y="490"
+      text-anchor="middle"
+      font-family="Georgia, serif"
+      font-size="16"
+      letter-spacing="4"
+      fill="#9B6EF3"
+      opacity="0.82">नव  ·  वेद</text>
+
+<!-- Tagline -->
+<text x="280" y="516"
+      text-anchor="middle"
+      font-family="Georgia, serif"
+      font-size="12"
+      letter-spacing="2.5"
+      fill="#8AA8FF"
+      opacity="0.60">New Knowledge · Infinite Growth</text>
+
+<!-- Bottom tilak divider accent -->
+<line x1="192" y1="534" x2="264" y2="534" stroke="#F5C518" stroke-width="0.75" opacity="0.25"/>
+<circle cx="280" cy="534" r="3.5" fill="#FF7722" opacity="0.55"/>
+<line x1="296" y1="534" x2="368" y2="534" stroke="#F5C518" stroke-width="0.75" opacity="0.25"/>
+
+</svg>

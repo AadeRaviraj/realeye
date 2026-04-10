@@ -8,6 +8,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:501040465224:android:ccd86e26a8b1cb565c1f7d",
+        "android_client_info": {
+          "package_name": "com.example.navaveda"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcE7ubNny38ARibY2SoATHbAJGBUJRLBE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:501040465224:android:da163d366b1dbd575c1f7d",
         "android_client_info": {
           "package_name": "com.example.realeyes"

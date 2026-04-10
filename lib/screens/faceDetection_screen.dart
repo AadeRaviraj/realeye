@@ -343,7 +343,7 @@ class FaceDetectionScreen extends StatelessWidget {
             text: const TextSpan(
               children: [
                 TextSpan(
-                  text: 'Real',
+                  text: 'Nava',
                   style: TextStyle(
                     color: Colors.orange,
                     fontStyle: FontStyle.italic,
@@ -352,7 +352,7 @@ class FaceDetectionScreen extends StatelessWidget {
                   ),
                 ),
                 TextSpan(
-                  text: 'Eye',
+                  text: 'Veda',
                   style: TextStyle(
                     color: Colors.purple,
                     fontWeight: FontWeight.bold,
@@ -407,7 +407,7 @@ class FaceDetectionScreen extends StatelessWidget {
               //       'ही विनंती विशेषतः मुलींसाठी आहे —\n'
               //       'स्वतःच्या गोपनीयतेची आणि सुरक्षेची काळजी घ्या.\n'
               //       '⚠ तुमचा चेहरा हा तुमची ओळख आहे.\nतो एकदा इंटरनेटवर गेला की परत आणता येत नाही.\n'
-              //       'स्वतःचं काय योग्य, काय अयोग्य — हे तुम्ही तुमच्या Realeye ने पाहा',
+              //       'स्वतःचं काय योग्य, काय अयोग्य — हे तुम्ही तुमच्या Navaveda ने पाहा',
               //   textAlign: TextAlign.left,
               //   style: TextStyle(
               //     fontSize: 15,
@@ -440,7 +440,7 @@ class FaceDetectionScreen extends StatelessWidget {
                           '📸 म्हणून, फोटो अपलोड करताना १० वेळा विचार करा,\n'
                           'स्वतःच्या गोपनीयतेची आणि सुरक्षेची काळजी घ्या.\n'
                           '⚠ तुमचा चेहरा हा तुमची ओळख आहे.\nतो एकदा इंटरनेटवर गेला की परत आणता येत नाही.\n'
-                          'स्वतःचं काय योग्य, काय अयोग्य — हे तुम्ही तुमच्या Realeye ने पाहा',
+                          'स्वतःचं काय योग्य, काय अयोग्य — हे तुम्ही तुमच्या Navaveda ने पाहा',
                     ),
                   ],
                 ),

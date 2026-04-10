@@ -5,10 +5,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:realeyes/design/theme_provider.dart';
-import 'package:realeyes/design/language_provider.dart';
-import 'package:realeyes/generated/app_localizations.dart';
-import 'package:realeyes/services/notification_service.dart';
+import 'package:navaveda/design/theme_provider.dart';
+import 'package:navaveda/design/language_provider.dart';
+import 'package:navaveda/generated/app_localizations.dart';
+import 'package:navaveda/services/notification_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -20,7 +21,19 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = false;
   bool _loadingNotif = true;
+  final Uri privacyUrl = Uri.parse(
+      "https://aaderaviraj.github.io/Navaveda_term_condition/privacy.html"
+  );
 
+  final Uri termsUrl = Uri.parse(
+      "https://aaderaviraj.github.io/Navaveda_term_condition/terms.html"
+  );
+
+  Future<void> _openUrl(Uri url) async {
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -99,19 +112,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 20),
 
           // ── Notifications ───────────────────────────────────
-          _SectionLabel(loc.notifications),
-          _Card(children: [
-            _loadingNotif
-                ? const ListTile(leading: CircularProgressIndicator(), title: Text('Loading...'))
-                : _SwitchTile(
-                    icon: Icons.notifications_rounded,
-                    iconColor: const Color(0xFF4776E6),
-                    title: loc.notifications,
-                    subtitle: loc.notificationsSubtitle,
-                    value: _notificationsEnabled,
-                    onChanged: _toggleNotifications,
-                  ),
-          ]),
+          // _SectionLabel(loc.notifications),
+          // _Card(children: [
+          //   _loadingNotif
+          //       ? const ListTile(leading: CircularProgressIndicator(), title: Text('Loading...'))
+          //       : _SwitchTile(
+          //           icon: Icons.notifications_rounded,
+          //           iconColor: const Color(0xFF4776E6),
+          //           title: loc.notifications,
+          //           subtitle: loc.notificationsSubtitle,
+          //           value: _notificationsEnabled,
+          //           onChanged: _toggleNotifications,
+          //         ),
+          // ]),
           const SizedBox(height: 20),
 
           // ── Language ────────────────────────────────────────
@@ -148,7 +161,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               iconColor: const Color(0xFF4776E6),
               title: loc.privacyPolicy,
               subtitle: loc.privacyPolicySubtitle,
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
+              // onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
+              onTap: () => _openUrl(privacyUrl),
             ),
             const Divider(height: 1, indent: 70),
             _ArrowTile(
@@ -156,7 +170,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               iconColor: const Color(0xFF11998E),
               title: loc.termsConditions,
               subtitle: loc.termsConditionsSubtitle,
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsConditionsScreen())),
+              onTap: () => _openUrl(termsUrl),
             ),
             const Divider(height: 1, indent: 70),
             // _ArrowTile(
@@ -186,7 +200,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 30),
           Center(child: Column(children: [
-            Text('Realeye', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey.shade500)),
+            Text('Navaveda', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey.shade500)),
             const SizedBox(height: 4),
             Text('${loc.version} 1.0.0', style: TextStyle(color: Colors.grey.shade400, fontSize: 13)),
           ])),
@@ -204,7 +218,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Row(children: [
           Icon(Icons.star, color: Colors.amber, size: 28),
           SizedBox(width: 10),
-          Text('Rate Realeye'),
+          Text('Rate Navaveda'),
         ]),
         content: const Text('Enjoying the app? Please rate us on the Play Store — it helps us a lot!'),
         actions: [
@@ -329,7 +343,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
       _LegalSection('Data Storage', 'Your data is securely stored using Firebase (Google) and Supabase. Profile images are stored on Cloudinary. We implement industry-standard security measures to protect your personal information.'),
       _LegalSection('Third-Party Services', 'We use Firebase Authentication, Firebase Realtime Database, Supabase (PostgreSQL), and Cloudinary for image storage. These services have their own privacy policies.'),
       _LegalSection('Data Retention', 'We retain your data as long as your account is active. You can request deletion of your account and associated data at any time by contacting us.'),
-      _LegalSection('Contact Us', 'If you have any questions about this Privacy Policy, please contact us at support@realeye.app'),
+      _LegalSection('Contact Us', 'If you have any questions about this Privacy Policy, please contact us at raviraj.s.aade@gmail.com'),
     ],
   );
 }
@@ -344,14 +358,14 @@ class TermsConditionsScreen extends StatelessWidget {
     icon: Icons.description_rounded,
     iconColor: const Color(0xFF11998E),
     sections: const [
-      _LegalSection('Acceptance of Terms', 'By accessing or using the Realeye application, you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our app.'),
-      _LegalSection('Use of Service', 'Realeye is an educational platform designed to help users prepare for technical interviews and improve their coding skills. You may use the service only for lawful purposes and in accordance with these Terms.'),
+      _LegalSection('Acceptance of Terms', 'By accessing or using the Navaveda application, you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our app.'),
+      _LegalSection('Use of Service', 'Navaveda is an educational platform designed to help users prepare for technical interviews and improve their coding skills. You may use the service only for lawful purposes and in accordance with these Terms.'),
       _LegalSection('User Accounts', 'You are responsible for maintaining the confidentiality of your account credentials. You agree to notify us immediately of any unauthorized use of your account.'),
-      _LegalSection('Content', 'All study materials, questions, and notes provided through Realeye are for educational purposes only. The content is owned by Realeye and may not be reproduced without permission.'),
+      _LegalSection('Content', 'All study materials, questions, and notes provided through Navaveda are for educational purposes only. The content is owned by Navaveda and may not be reproduced without permission.'),
       _LegalSection('Subscriptions', 'Some features require a paid subscription. Subscription fees are charged in advance. Refunds are subject to our refund policy.'),
-      _LegalSection('Limitation of Liability', 'Realeye shall not be liable for any indirect, incidental, special, or consequential damages resulting from your use of or inability to use the service.'),
+      _LegalSection('Limitation of Liability', 'Navaveda shall not be liable for any indirect, incidental, special, or consequential damages resulting from your use of or inability to use the service.'),
       _LegalSection('Changes to Terms', 'We reserve the right to modify these terms at any time. Continued use of the app after changes constitutes acceptance of the new terms.'),
-      _LegalSection('Contact', 'For questions about these Terms, contact us at legal@realeye.app'),
+      _LegalSection('Contact', 'For questions about these Terms, contact us at raviraj.s.aade@gmail.com'),
     ],
   );
 }
@@ -369,10 +383,10 @@ class HelpSupportScreen extends StatelessWidget {
       _FAQ('How do I change my profile photo?', 'Go to Profile → Settings tab → Edit Profile. Tap on the avatar to select a new photo from your gallery (max 1MB).'),
       _FAQ('How does the study streak work?', 'Your streak increases by 1 for every day you complete at least one study session (minimum 40 seconds). Missing a day resets your streak.'),
       _FAQ('Why is the Quiz button not showing?', 'You need to read the notes for at least 40 seconds before the Quiz button unlocks. This ensures better retention.'),
-      _FAQ('How do I switch the app language?', 'Go to Profile → Settings tab → Settings → Language section. Select English, Marathi, or Hindi.'),
+      // _FAQ('How do I switch the app language?', 'Go to Profile → Settings tab → Settings → Language section. Select English, Marathi, or Hindi.'),
       _FAQ('How is my accuracy percentage calculated?', 'Accuracy = (Correct quiz answers / Total quiz attempts) × 100. It updates after every quiz submission.'),
-      _FAQ('I forgot my password. What do I do?', 'On the Sign In screen, tap "Forgot Password?" and enter your email to receive a reset link.'),
-      _FAQ('How do I enable notifications?', 'Go to Profile → Settings tab → Settings → Notifications toggle. Make sure you allow notification permissions when prompted.'),
+      // _FAQ('I forgot my password. What do I do?', 'On the Sign In screen, tap "Forgot Password?" and enter your email to receive a reset link.'),
+      // _FAQ('How do I enable notifications?', 'Go to Profile → Settings tab → Settings → Notifications toggle. Make sure you allow notification permissions when prompted.'),
     ];
 
     return Scaffold(
@@ -380,10 +394,10 @@ class HelpSupportScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: isDark ? Colors.white : Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ),
+        // leading: IconButton(
+        //   icon: Icon(Icons.arrow_back_rounded, color: isDark ? Colors.white : Colors.black87),
+        //   onPressed: () => Navigator.pop(context),
+        // ),
         title: Text(loc.helpSupport, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold)),
       ),
       body: ListView(
@@ -406,7 +420,7 @@ class HelpSupportScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
-                child: const Text('support@realeye.app', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                child: const Text('raviraj.s.aade@gmail.com', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
               ),
             ]),
           ),
@@ -534,3 +548,192 @@ class _LegalScreen extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+//
+// import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
+// import 'package:provider/provider.dart';
+// import 'package:url_launcher/url_launcher.dart';
+//
+// import 'package:navaveda/design/theme_provider.dart';
+// import 'package:navaveda/generated/app_localizations.dart';
+//
+// class SettingsScreen extends StatefulWidget {
+//   const SettingsScreen({Key? key}) : super(key: key);
+//
+//   @override
+//   State<SettingsScreen> createState() => _SettingsScreenState();
+// }
+//
+// class _SettingsScreenState extends State<SettingsScreen> {
+//   final Uri privacyUrl = Uri.parse(
+//     "https://aaderaviraj.github.io/Navaveda_term_condition/privacy.html",
+//   );
+//
+//   final Uri termsUrl = Uri.parse(
+//     "https://aaderaviraj.github.io/Navaveda_term_condition/terms.html",
+//   );
+//
+//   Future<void> _openUrl(Uri url) async {
+//     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+//       throw Exception('Could not launch $url');
+//     }
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final isDark = Theme.of(context).brightness == Brightness.dark;
+//     final themeProvider = context.watch<ThemeProvider>();
+//     final loc = AppLocalizations.of(context);
+//
+//     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+//       statusBarColor: Colors.transparent,
+//       statusBarIconBrightness:
+//       isDark ? Brightness.light : Brightness.dark,
+//     ));
+//
+//     return Scaffold(
+//       backgroundColor:
+//       isDark ? const Color(0xFF0F0F0F) : const Color(0xFFF5F7FA),
+//       appBar: AppBar(
+//         backgroundColor: Colors.transparent,
+//         elevation: 0,
+//         leading: IconButton(
+//           icon: Icon(Icons.arrow_back_rounded,
+//               color: isDark ? Colors.white : Colors.black87),
+//           onPressed: () => Navigator.pop(context),
+//         ),
+//         title: Text(
+//           loc.settings,
+//           style: TextStyle(
+//             color: isDark ? Colors.white : Colors.black87,
+//             fontWeight: FontWeight.bold,
+//           ),
+//         ),
+//       ),
+//       body: ListView(
+//         padding: const EdgeInsets.all(16),
+//         children: [
+//           // ── Appearance ─────────────────────────────
+//           _SectionLabel(loc.appearance),
+//           _Card(children: [
+//             ListTile(
+//               leading: const Icon(Icons.dark_mode_rounded),
+//               title: Text(loc.darkMode),
+//               subtitle: Text(loc.darkModeSubtitle),
+//               trailing: Switch(
+//                 value: themeProvider.isDarkMode,
+//                 onChanged: themeProvider.toggleTheme,
+//               ),
+//             ),
+//           ]),
+//
+//           const SizedBox(height: 20),
+//
+//           // ── More ─────────────────────────────
+//           _SectionLabel(loc.more),
+//           _Card(children: [
+//             _ArrowTile(
+//               icon: Icons.privacy_tip_rounded,
+//               title: loc.privacyPolicy,
+//               subtitle: loc.privacyPolicySubtitle,
+//               onTap: () => _openUrl(privacyUrl),
+//             ),
+//             const Divider(height: 1),
+//             _ArrowTile(
+//               icon: Icons.description_rounded,
+//               title: loc.termsConditions,
+//               subtitle: loc.termsConditionsSubtitle,
+//               onTap: () => _openUrl(termsUrl),
+//             ),
+//           ]),
+//
+//           const SizedBox(height: 40),
+//
+//           Center(
+//             child: Text(
+//               "Navaveda v1.0.0",
+//               style: TextStyle(color: Colors.grey.shade500),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+//
+// // ── UI Helpers ─────────────────────────────
+//
+// class _SectionLabel extends StatelessWidget {
+//   final String text;
+//   const _SectionLabel(this.text);
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Padding(
+//       padding: const EdgeInsets.only(bottom: 8),
+//       child: Text(
+//         text.toUpperCase(),
+//         style: TextStyle(
+//           fontSize: 11,
+//           fontWeight: FontWeight.bold,
+//           color: Colors.grey.shade500,
+//         ),
+//       ),
+//     );
+//   }
+// }
+//
+// class _Card extends StatelessWidget {
+//   final List<Widget> children;
+//   const _Card({required this.children});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final isDark = Theme.of(context).brightness == Brightness.dark;
+//
+//     return Container(
+//       decoration: BoxDecoration(
+//         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+//         borderRadius: BorderRadius.circular(16),
+//       ),
+//       child: Column(children: children),
+//     );
+//   }
+// }
+//
+// class _ArrowTile extends StatelessWidget {
+//   final IconData icon;
+//   final String title;
+//   final String subtitle;
+//   final VoidCallback onTap;
+//
+//   const _ArrowTile({
+//     required this.icon,
+//     required this.title,
+//     required this.subtitle,
+//     required this.onTap,
+//   });
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return ListTile(
+//       leading: Icon(icon),
+//       title: Text(title),
+//       subtitle: Text(subtitle),
+//       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+//       onTap: onTap,
+//     );
+//   }
+// }

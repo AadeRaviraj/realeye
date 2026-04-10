@@ -4,20 +4,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:realeyes/features/profile/providers/profile_provider.dart';
-import 'package:realeyes/features/profile/widgets/profile_tab.dart';
-import 'package:realeyes/features/profile/widgets/stats_tab.dart';
-import 'package:realeyes/features/profile/widgets/settings_tab.dart';
+import 'package:navaveda/features/profile/providers/profile_provider.dart';
+import 'package:navaveda/features/profile/widgets/profile_tab.dart';
+import 'package:navaveda/features/profile/widgets/stats_tab.dart';
+import 'package:navaveda/features/profile/widgets/settings_tab.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ProfileProvider(),
-      child: const _ProfileScreenBody(),
-    );
+    // Use the existing ProfileProvider from main.dart — do NOT create a new one here.
+    // Creating a new one caused the profile screen to show stale/old user data.
+    return const _ProfileScreenBody();
   }
 }
 
@@ -41,6 +40,10 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody>
         vsync: this, duration: const Duration(milliseconds: 500));
     _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
     _animController.forward();
+
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   context.read<ProfileProvider>().refreshUserProfile();
+    // });
   }
 
   @override
@@ -76,30 +79,30 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody>
                     background: _ProfileHeader(provider: provider, isDark: isDark),
                     title: isCollapsed
                         ? Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 16,
-                                backgroundImage: provider.profileImageUrl != null
-                                    ? NetworkImage(provider.profileImageUrl!)
-                                        as ImageProvider
-                                    : const AssetImage('assets/images/angryp_cricle.png'),
-                              ),
-                              const SizedBox(width: 10),
-                              Flexible(
-                                child: Text(
-                                  provider.userName,
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          )
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundImage: provider.profileImageUrl != null
+                              ? NetworkImage(provider.profileImageUrl!)
+                          as ImageProvider
+                              : const AssetImage('assets/images/angryp_cricle.png'),
+                        ),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(
+                            provider.userName,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    )
                         : null,
                     titlePadding:
-                        const EdgeInsetsDirectional.only(start: 16, bottom: 14),
+                    const EdgeInsetsDirectional.only(start: 16, bottom: 14),
                   );
                 },
               ),
@@ -232,8 +235,8 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
 
   const _TabBarDelegate(
       {required this.selectedTab,
-      required this.onTabSelected,
-      required this.isDark});
+        required this.onTabSelected,
+        required this.isDark});
 
   static const _tabs = [
     {'icon': Icons.person_rounded, 'label': 'Profile'},

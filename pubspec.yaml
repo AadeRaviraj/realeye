@@ -1,5 +1,5 @@
-name: realeyes
-description: "A Face Detection App ."
+name: navaveda
+description: "A Face Detection App."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -25,6 +25,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_svg: ^2.0.10
   flutter_markdown: ^0.7.0
 
   cupertino_icons: ^1.0.8
@@ -48,6 +49,7 @@ dependencies:
   firebase_messaging: ^15.0.0
   flutter_local_notifications: ^17.2.0   # Notifications
   timezone: ^0.9.4                        # For scheduled notifications
+  url_launcher: ^6.2.5
 
 
 
@@ -68,7 +70,7 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon/eye_.png"
+  image_path: "assets/icon/appIcon.png"
   remove_alpha_ios: true
 
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -110,6 +112,7 @@ flutter:
     - assets/images/img_1.jpg
     - assets/images/img_2.jpg
     - assets/images/img_3.jpg
+    - assets/images/navaveda_splash_screen.svg
 
 
   # To add assets to your application, add an assets section, like this:

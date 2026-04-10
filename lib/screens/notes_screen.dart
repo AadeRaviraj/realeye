@@ -4,11 +4,11 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:realeyes/models/notes.dart';
-import 'package:realeyes/models/study_session_request.dart';
-import 'package:realeyes/services/api_service.dart';
-import 'package:realeyes/screens/quiz_screen.dart';
-import 'package:realeyes/features/profile/widgets/ai_chat_fab.dart';
+import 'package:navaveda/models/notes.dart';
+import 'package:navaveda/models/study_session_request.dart';
+import 'package:navaveda/services/api_service.dart';
+import 'package:navaveda/screens/quiz_screen.dart';
+import 'package:navaveda/features/profile/widgets/ai_chat_fab.dart';
 
 class NotesScreen extends StatefulWidget {
   final int subtopicId;
@@ -241,6 +241,15 @@ class _NotesScreenState extends State<NotesScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: isDark ? Colors.white : Colors.black87,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF4776E6), Color(0xFF8E54E9)],
+            ),
+          ),
+        ),
         actions: [
           // Countdown timer in AppBar
           if (!widget.isCompleted && !_quizEnabled)

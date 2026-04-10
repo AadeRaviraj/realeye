@@ -2,13 +2,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'signin_screen.dart';
 import 'InterviewPrep_screen.dart';
 import 'faceDetection_screen.dart';
-import 'package:realeyes/features/profile/screens/profile_screen.dart';
+import 'package:navaveda/features/profile/screens/profile_screen.dart';
 import 'study_screen.dart';
-import 'package:realeyes/screens/exit_review_handler.dart';
+import 'package:navaveda/screens/exit_review_handler.dart';
+import 'package:navaveda/services/api_service.dart';
+import 'package:navaveda/models/dashboard_data.dart';
+import 'package:navaveda/features/profile/providers/profile_provider.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -19,8 +22,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   // ── State ───────────────────────────────────────────────────
-  String _username = '';
-  String? _profileImageUrl;
+
+
   int _selectedIndex = 0;
   bool _showFaceDetection = false;
   final ScrollController _scrollController = ScrollController();
@@ -30,15 +33,14 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ── Fixed motivational quote ────────────────────────────────
   static const String _quote =
-      '"The future belongs to those who believe in the beauty of their dreams."';
-  static const String _quoteAuthor = '— Eleanor Roosevelt';
+      '"I don’t believe in taking right decisions. I take decisions and then make them right."';
+  static const String _quoteAuthor = '— Ratan Tata';
 
   // ── Lifecycle ───────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
-    _fetchUserData();
-    _loadUserProfileImage();
+
   }
 
   @override
@@ -48,34 +50,34 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── Data fetching — unchanged logic ─────────────────────────
-  void _loadUserProfileImage() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-    final snapshot = await FirebaseDatabase.instance
-        .ref()
-        .child('users')
-        .child(user.uid)
-        .get();
-    if (snapshot.exists) {
-      final data = snapshot.value as Map<dynamic, dynamic>;
-      if (mounted) {
-        setState(() => _profileImageUrl = data['profile_image']);
-      }
-    }
-  }
+  // void _loadUserProfileImage() async {
+  //   final user = FirebaseAuth.instance.currentUser;
+  //   if (user == null) return;
+  //   final snapshot = await FirebaseDatabase.instance
+  //       .ref()
+  //       .child('users')
+  //       .child(user.uid)
+  //       .get();
+  //   if (snapshot.exists) {
+  //     final data = snapshot.value as Map<dynamic, dynamic>;
+  //     if (mounted) {
+  //       setState(() => _profileImageUrl = data['profile_image']);
+  //     }
+  //   }
+  // }
 
-  void _fetchUserData() async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-    final snapshot =
-    await _database.child('users').child(user.uid).get();
-    if (snapshot.exists) {
-      final name = snapshot.child('full_name').value.toString();
-      final prefs = await SharedPreferences.getInstance();
-      prefs.setString('username', name);
-      if (mounted) setState(() => _username = name);
-    }
-  }
+  // void _fetchUserData() async {
+  //   final user = _auth.currentUser;
+  //   if (user == null) return;
+  //   final snapshot =
+  //   await _database.child('users').child(user.uid).get();
+  //   if (snapshot.exists) {
+  //     final name = snapshot.child('full_name').value.toString();
+  //     final prefs = await SharedPreferences.getInstance();
+  //     prefs.setString('username', name);
+  //     if (mounted) setState(() => _username = name);
+  //   }
+  // }
 
   void _onItemTapped(int index) {
     if (mounted) {
@@ -97,9 +99,12 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final profileProvider = context.watch<ProfileProvider>();
+    final username = profileProvider.userName;
+    final profileImageUrl = profileProvider.profileImageUrl;
 
     final screens = [
-      _buildHomeBody(isDark),
+      _buildHomeBody(isDark, username, profileImageUrl),
       StudyScreen(),
       InterviewPrepScreen(),
       const ProfileScreen(),
@@ -108,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen>
     return ExitReviewHandler(
       child: Scaffold(
         backgroundColor:
-        isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF2F4F8),
+        isDark ? const Color(0xFF0A0A0A) : const Color(0xFFDADFE8),
         appBar: _selectedIndex != 0
             ? AppBar(
           backgroundColor: Colors.transparent,
@@ -117,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen>
             text: const TextSpan(
               children: [
                 TextSpan(
-                  text: 'Real',
+                  text: 'Nava',
                   style: TextStyle(
                     color: Colors.orange,
                     fontStyle: FontStyle.italic,
@@ -126,14 +131,23 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
                 TextSpan(
-                  text: 'Eye',
+                  text: 'Veda',
                   style: TextStyle(
-                    color: Colors.purple,
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
                   ),
                 ),
               ],
+            ),
+          ),
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF4776E6), Color(0xFF8E54E9)],
+              ),
             ),
           ),
         )
@@ -152,9 +166,9 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── Home Body ────────────────────────────────────────────────
-  Widget _buildHomeBody(bool isDark) {
-    final ImageProvider profileImg = _profileImageUrl != null
-        ? NetworkImage(_profileImageUrl!)
+  Widget _buildHomeBody(bool isDark, String username, String? profileImageUrl) {
+    final ImageProvider profileImg = profileImageUrl != null
+        ? NetworkImage(profileImageUrl)
         : const AssetImage('assets/images/angryp_cricle.png');
 
     return CustomScrollView(
@@ -187,27 +201,28 @@ class _HomeScreenState extends State<HomeScreen>
           flexibleSpace: FlexibleSpaceBar(
             collapseMode: CollapseMode.parallax,
             titlePadding:
-            const EdgeInsets.only(left: 16, bottom: 14),
+            const EdgeInsets.only(left: 16, bottom: 10),
             title: _CollapsingTitleBuilder(
               scrollController: _scrollController,
               child: RichText(
                 text: const TextSpan(
                   children: [
                     TextSpan(
-                      text: 'Real',
+                      text: 'Nava',
                       style: TextStyle(
                         color: Colors.orange,
                         fontStyle: FontStyle.italic,
-                        fontSize: 17,
+                        fontSize: 20,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+
                     TextSpan(
-                      text: 'Eye',
+                      text: 'Veda',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 17,
+                        fontSize: 20,
                       ),
                     ),
                   ],
@@ -215,7 +230,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
             background: _HeroBanner(
-              username: _username,
+              username: username,
               profileImg: profileImg,
               greeting: _getGreeting(),
               isDark: isDark,
@@ -237,12 +252,13 @@ class _HomeScreenState extends State<HomeScreen>
         ),
 
         // ── Feature Cards ───────────────────────────────────
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-            child: _SectionTitle(title: 'Explore Features', isDark: isDark),
-          ),
-        ),
+        // SliverToBoxAdapter(
+        //   child: Padding(
+        //     padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+        //     child: _SectionTitle(title: 'Explore Features', isDark: isDark),
+        //   ),
+        // ),
+
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -259,10 +275,56 @@ class _HomeScreenState extends State<HomeScreen>
         ),
 
         // ── Quick Actions ───────────────────────────────────
+        // SliverToBoxAdapter(
+        //   child: Padding(
+        //     padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+        //     child: _SectionTitle(title: 'Quick Actions', isDark: isDark),
+        //   ),
+        // ),
+        //
+        // SliverPadding(
+        //   padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+        //   sliver: SliverGrid(
+        //     delegate: SliverChildBuilderDelegate(
+        //           (context, index) {
+        //         final actions = _quickActions(context);
+        //         return _ActionCard(
+        //           icon: actions[index]['icon'] as IconData,
+        //           label: actions[index]['label'] as String,
+        //           color: actions[index]['color'] as Color,
+        //           onTap: actions[index]['onTap'] as VoidCallback,
+        //         );
+        //       },
+        //       childCount: _quickActions(context).length,
+        //     ),
+        //     gridDelegate:
+        //     const SliverGridDelegateWithFixedCrossAxisCount(
+        //       crossAxisCount: 2,
+        //       crossAxisSpacing: 14,
+        //       mainAxisSpacing: 14,
+        //       childAspectRatio: 1.25,
+        //     ),
+        //   ),
+        // ),
+
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-            child: _SectionTitle(title: 'Quick Actions', isDark: isDark),
+            child: _SectionTitle(title: 'Your Progress', isDark: isDark),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: _StatsBanner(isDark: isDark),
+          ),
+        ),
+
+// ── Working Actions ──────────────────────────────────────
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+            child: _SectionTitle(title: 'Get Started', isDark: isDark),
           ),
         ),
         SliverPadding(
@@ -270,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen>
           sliver: SliverGrid(
             delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                final actions = _quickActions(context);
+                final actions = _workingActions(context);
                 return _ActionCard(
                   icon: actions[index]['icon'] as IconData,
                   label: actions[index]['label'] as String,
@@ -278,10 +340,9 @@ class _HomeScreenState extends State<HomeScreen>
                   onTap: actions[index]['onTap'] as VoidCallback,
                 );
               },
-              childCount: _quickActions(context).length,
+              childCount: _workingActions(context).length,
             ),
-            gridDelegate:
-            const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 14,
               mainAxisSpacing: 14,
@@ -289,61 +350,87 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
         ),
+
       ],
     );
   }
-
-  List<Map<String, dynamic>> _quickActions(BuildContext context) => [
+  //
+  // List<Map<String, dynamic>> _quickActions(BuildContext context) => [
+  //   {
+  //     'icon': Icons.description_rounded,
+  //     'label': 'Resume Review',
+  //     'color': const Color(0xFF2DD4BF),
+  //     'onTap': () => _snack(context, 'Resume Review coming soon!'),
+  //   },
+  //   {
+  //     'icon': Icons.mic_rounded,
+  //     'label': 'Mock Interview',
+  //     'color': const Color(0xFF8B5CF6),
+  //     'onTap': () => setState(() => _selectedIndex = 2),
+  //   },
+  //   {
+  //     'icon': Icons.quiz_rounded,
+  //     'label': 'Daily Quiz',
+  //     'color': const Color(0xFF4F46E5),
+  //     'onTap': () => setState(() => _selectedIndex = 1),
+  //   },
+  //   {
+  //     'icon': Icons.track_changes_rounded,
+  //     'label': 'Goal Tracker',
+  //     'color': const Color(0xFFFB7185),
+  //     'onTap': () => _snack(context, 'Goal Tracker coming soon!'),
+  //   },
+  //   {
+  //     'icon': Icons.psychology_rounded,
+  //     'label': 'AI Coach',
+  //     'color': const Color(0xFF10B981),
+  //     'onTap': () => setState(() => _selectedIndex = 1),
+  //   },
+  //   {
+  //     'icon': Icons.face_retouching_natural_rounded,
+  //     'label': 'Face Detection',
+  //     'color': const Color(0xFFFC5C7D),
+  //     'onTap': () => setState(() => _showFaceDetection = true),
+  //   },
+  //   {
+  //     'icon': Icons.school_rounded,
+  //     'label': 'Study Hub',
+  //     'color': const Color(0xFF6366F1),
+  //     'onTap': () => setState(() => _selectedIndex = 1),
+  //   },
+  //   {
+  //     'icon': Icons.people_rounded,
+  //     'label': 'Community',
+  //     'color': const Color(0xFFF97316),
+  //     'onTap': () => _snack(context, 'Community coming soon!'),
+  //   },
+  // ];
+  List<Map<String, dynamic>> _workingActions(BuildContext context) => [
     {
-      'icon': Icons.description_rounded,
-      'label': 'Resume Review',
-      'color': const Color(0xFF2DD4BF),
-      'onTap': () => _snack(context, 'Resume Review coming soon!'),
-    },
-    {
-      'icon': Icons.mic_rounded,
-      'label': 'Mock Interview',
-      'color': const Color(0xFF8B5CF6),
+      'icon': Icons.record_voice_over_rounded,
+      'label': 'Interview Prep',
+      'color': const Color(0xFF8E54E9),
       'onTap': () => setState(() => _selectedIndex = 2),
     },
     {
-      'icon': Icons.quiz_rounded,
-      'label': 'Daily Quiz',
-      'color': const Color(0xFF4F46E5),
+      'icon': Icons.menu_book_rounded,
+      'label': 'Start Study',
+      'color': const Color(0xFF4776E6),
       'onTap': () => setState(() => _selectedIndex = 1),
     },
+    // {
+    //   'icon': Icons.face_retouching_natural_rounded,
+    //   'label': 'Face Detection',
+    //   'color': const Color(0xFF11998E),
+    //   'onTap': () => setState(() => _showFaceDetection = true),
+    // },
     {
-      'icon': Icons.track_changes_rounded,
-      'label': 'Goal Tracker',
-      'color': const Color(0xFFFB7185),
-      'onTap': () => _snack(context, 'Goal Tracker coming soon!'),
-    },
-    {
-      'icon': Icons.psychology_rounded,
-      'label': 'AI Coach',
-      'color': const Color(0xFF10B981),
-      'onTap': () => setState(() => _selectedIndex = 1),
-    },
-    {
-      'icon': Icons.face_retouching_natural_rounded,
-      'label': 'Face Detection',
-      'color': const Color(0xFFFC5C7D),
-      'onTap': () => setState(() => _showFaceDetection = true),
-    },
-    {
-      'icon': Icons.school_rounded,
-      'label': 'Study Hub',
-      'color': const Color(0xFF6366F1),
-      'onTap': () => setState(() => _selectedIndex = 1),
-    },
-    {
-      'icon': Icons.people_rounded,
-      'label': 'Community',
-      'color': const Color(0xFFF97316),
-      'onTap': () => _snack(context, 'Community coming soon!'),
+      'icon': Icons.account_circle_rounded,
+      'label': 'My Profile',
+      'color': const Color(0xFFF7971E),
+      'onTap': () => setState(() => _selectedIndex = 3),
     },
   ];
-
   void _snack(BuildContext context, String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
@@ -641,16 +728,16 @@ class _QuoteCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Quote of the Day',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF4776E6),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 6),
+                // Text(
+                //   'Quote of the Day',
+                //   style: TextStyle(
+                //     fontSize: 11,
+                //     fontWeight: FontWeight.w700,
+                //     color: const Color(0xFF4776E6),
+                //     letterSpacing: 0.5,
+                //   ),
+                // ),
+                // const SizedBox(height: 6),
                 Text(
                   quote,
                   style: TextStyle(
@@ -717,31 +804,32 @@ class _FeatureCards extends StatelessWidget {
     required this.isDark,
   });
 
+  // Showing the other eXplore card
   @override
   Widget build(BuildContext context) {
-    final items = [
-      _FeatItem(
-        icon: Icons.record_voice_over_rounded,
-        title: 'Interview\nPrep',
-        sub: 'AI Questions',
-        colors: [const Color(0xFF8E54E9), const Color(0xFF4776E6)],
-        onTap: onInterviewTap,
-      ),
-      _FeatItem(
-        icon: Icons.face_retouching_natural_rounded,
-        title: 'Emotion\nDetect',
-        sub: 'Face AI',
-        colors: [const Color(0xFF11998E), const Color(0xFF38EF7D)],
-        onTap: onFaceTap,
-      ),
-      _FeatItem(
-        icon: Icons.menu_book_rounded,
-        title: 'Study\nHub',
-        sub: 'Learn & Grow',
-        colors: [const Color(0xFFF7971E), const Color(0xFFFC5C7D)],
-        onTap: onStudyTap,
-      ),
-    ];
+     final items = [
+    //   _FeatItem(
+    //     icon: Icons.record_voice_over_rounded,
+    //     title: 'Interview\nPrep',
+    //     sub: 'AI Questions',
+    //     colors: [const Color(0xFF8E54E9), const Color(0xFF4776E6)],
+    //     onTap: onInterviewTap,
+    //   ),
+    //   // _FeatItem(
+    //   //   icon: Icons.face_retouching_natural_rounded,
+    //   //   title: 'Emotion\nDetect',
+    //   //   sub: 'Face AI',
+    //   //   colors: [const Color(0xFF11998E), const Color(0xFF38EF7D)],
+    //   //    onTap: onInterviewTap,
+    //   // ),
+    //   _FeatItem(
+    //     icon: Icons.menu_book_rounded,
+    //     title: 'Study\nHub',
+    //     sub: 'Learn & Grow',
+    //     colors: [const Color(0xFFF7971E), const Color(0xFFFC5C7D)],
+    //     onTap: onStudyTap,
+    //   ),
+     ];
 
     return Row(
       children: items.asMap().entries.map((entry) {
@@ -1069,6 +1157,302 @@ class _CollapsingProfileImageState
     );
   }
 }
+
+class _StatsBanner extends StatelessWidget {
+  final bool isDark;
+  const _StatsBanner({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return const SizedBox.shrink();
+
+    return FutureBuilder<DashboardData>(
+      future: ApiService.fetchDashboard(uid),
+      builder: (context, snapshot) {
+        // Loading state
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            height: 100,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation(Color(0xFF4776E6)),
+                strokeWidth: 2,
+              ),
+            ),
+          );
+        }
+
+        // Error or no data — show motivational banner instead
+        if (snapshot.hasError || !snapshot.hasData) {
+          return _buildMotivationBanner();
+        }
+
+        final data = snapshot.data!;
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4776E6).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.insights_rounded,
+                      color: Color(0xFF4776E6),
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Today\'s Activity',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                    ),
+                  ),
+                  const Spacer(),
+                  // Streak badge
+                  if (data.streak > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF6B35), Color(0xFFFF8C00)],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.local_fire_department,
+                              color: Colors.white, size: 13),
+                          const SizedBox(width: 3),
+                          Text(
+                            '${data.streak} day streak',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // 3 stat chips in a row
+              Row(
+                children: [
+                  _StatChip(
+                    icon: Icons.timer_rounded,
+                    value: '${data.todayMinutes}m',
+                    label: 'Today',
+                    color: const Color(0xFF4776E6),
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 10),
+                  _StatChip(
+                    icon: Icons.check_circle_rounded,
+                    value: '${data.completionPercentage.toInt()}%',
+                    label: 'Done',
+                    color: const Color(0xFF11998E),
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 10),
+                  _StatChip(
+                    icon: Icons.verified_rounded,
+                    value: '${data.accuracyPercentage.toInt()}%',
+                    label: 'Accuracy',
+                    color: const Color(0xFF8E54E9),
+                    isDark: isDark,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 14),
+
+              // Progress bar
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Overall Completion',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                      Text(
+                        '${data.completionPercentage.toStringAsFixed(1)}%',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF4776E6),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: data.completionPercentage / 100,
+                      backgroundColor: Colors.grey.shade200,
+                      valueColor: const AlwaysStoppedAnimation(
+                        Color(0xFF4776E6),
+                      ),
+                      minHeight: 8,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMotivationBanner() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF1a1a2e), const Color(0xFF16213e)]
+              : [const Color(0xFF4776E6), const Color(0xFF8E54E9)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.emoji_events_rounded,
+              color: Colors.amber,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Start Your Journey!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Complete your first study session to see stats here.',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Stat Chip ─────────────────────────────────────────────────
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+  final bool isDark;
+
+  const _StatChip({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withOpacity(0.15)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 5),
+            Text(
+              value,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: color,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.grey.shade500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
 // ──────────────────────────────────────────────────────────────
 // COLLAPSING TITLE BUILDER — unchanged logic

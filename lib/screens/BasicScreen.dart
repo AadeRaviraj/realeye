@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:realeyes/services/ai_service.dart'; // Import AI service
+import 'package:navaveda/services/ai_service.dart'; // Import AI service
 
 class BasicScreen extends StatefulWidget {
   final String language;

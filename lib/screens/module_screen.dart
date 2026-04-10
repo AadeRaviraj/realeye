@@ -1,19 +1,18 @@
-// lib/screens/topics_screen.dart
+// lib/screens/module_screen.dart
 import 'package:flutter/material.dart';
-import 'package:navaveda/models/topic.dart';
+import 'package:navaveda/models/modules.dart';
+import 'package:navaveda/screens/topics_screen.dart';
 import 'package:navaveda/services/api_service.dart';
-import 'package:navaveda/screens/subtopics_screen.dart';
-import 'package:navaveda/features/profile/widgets/ai_chat_fab.dart';
 
-class TopicsScreen extends StatefulWidget {
-  final int moduleId;
-  const TopicsScreen({Key? key, required this.moduleId}) : super(key: key);
+class ModuleScreen extends StatefulWidget {
+  final int courseId;
+  const ModuleScreen({Key? key, required this.courseId}) : super(key: key);
 
   @override
-  State<TopicsScreen> createState() => _TopicsScreenState();
+  State<ModuleScreen> createState() => _ModuleScreenState();
 }
 
-class _TopicsScreenState extends State<TopicsScreen> {
+class _ModuleScreenState extends State<ModuleScreen> {
   static const Color skyBlue = Color(0xFF5F9DF2);
 
   @override
@@ -23,7 +22,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F0F0F) : const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('Topics',
+        title: const Text('Course Modules',
             style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -38,9 +37,8 @@ class _TopicsScreenState extends State<TopicsScreen> {
           ),
         ),
       ),
-      // floatingActionButton: const AIChatFab(),
-      body: FutureBuilder<List<Topic>>(
-        future: ApiService.getTopics(widget.moduleId),
+      body: FutureBuilder<List<Modules>>(
+        future: ApiService.getModules(widget.courseId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -52,22 +50,22 @@ class _TopicsScreenState extends State<TopicsScreen> {
           if (snapshot.hasError) {
             return _buildError(snapshot.error.toString());
           }
-          final topics = snapshot.data ?? [];
-          if (topics.isEmpty) {
+          final modules = snapshot.data ?? [];
+          if (modules.isEmpty) {
             return _buildEmpty();
           }
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: topics.length,
+            itemCount: modules.length,
             itemBuilder: (context, index) {
-              return _TopicCard(
-                topic: topics[index],
+              return _ModuleCard(
+                module: modules[index],
                 index: index,
                 onTap: () {
                   Navigator.push(
                     context,
                     PageRouteBuilder(
-                      pageBuilder: (_, __, ___) => SubtopicsScreen(topicId: topics[index].id),
+                      pageBuilder: (_, __, ___) => TopicsScreen(moduleId: modules[index].id),
                       transitionsBuilder: (_, animation, __, child) {
                         return FadeTransition(opacity: animation, child: child);
                       },
@@ -94,22 +92,22 @@ class _TopicsScreenState extends State<TopicsScreen> {
 
   Widget _buildEmpty() => Center(
     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(Icons.topic_rounded, size: 64, color: Colors.grey.shade300),
+      Icon(Icons.menu_book_rounded, size: 64, color: Colors.grey.shade300),
       const SizedBox(height: 12),
-      Text('No topics available',
-          style: TextStyle(color: Colors.grey.shade600)),
+      Text('No modules available',
+          style: TextStyle(color: Colors.grey.shade500)),
     ]),
   );
 }
 
-// ── Simple Tappable Topic Card ─────────────────────────────
-class _TopicCard extends StatelessWidget {
-  final Topic topic;
+// ── Simple Tappable Module Card ─────────────────────────────
+class _ModuleCard extends StatelessWidget {
+  final Modules module;
   final int index;
   final VoidCallback onTap;
 
-  const _TopicCard({
-    required this.topic,
+  const _ModuleCard({
+    required this.module,
     required this.index,
     required this.onTap,
   });
@@ -165,7 +163,7 @@ class _TopicCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    topic.title,
+                    module.title,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -173,7 +171,7 @@ class _TopicCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Tap to view subtopics',
+                    'Tap to view topics',
                     style: TextStyle(
                         fontSize: 11, color: Colors.grey.shade500),
                   ),

@@ -2,8 +2,9 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:realeyes/screens/signin_screen.dart';
+import 'package:navaveda/screens/signin_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/signup_screen.dart'; // Import your login screen
 import 'screens/home_screen.dart'; // Import your home screen (or any other screens)
@@ -11,8 +12,9 @@ import 'firebase_options.dart'; //  this is initilization of cli ,(using node js
 import 'design/theme_provider.dart'; // theme provider
 import 'design/language_provider.dart'; // language provider
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:realeyes/generated/app_localizations.dart';
-import 'package:realeyes/services/notification_service.dart';
+import 'package:navaveda/generated/app_localizations.dart';
+import 'package:navaveda/services/notification_service.dart';
+import 'package:navaveda/features/profile/providers/profile_provider.dart';
 
 
 
@@ -25,10 +27,15 @@ void main() async {
 
   final languageProvider = LanguageProvider();
   await languageProvider.loadLocale();
-
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,       // transparent background
+    statusBarIconBrightness: Brightness.light, // white icons
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.light,
+  ));
 
   try {
-    print("Waiting For Initilize The Firebase");
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
@@ -43,7 +50,9 @@ void main() async {
         providers: [
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider<LanguageProvider>.value(value: languageProvider),
+          ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ],
+
         child: const MyApp(),
       ),
     );
@@ -70,7 +79,7 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
      // key: ValueKey(languageProvider.locale?.languageCode),
-      title: 'Realeye',
+      title: 'Navaveda',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.light(), // Light theme
       darkTheme: ThemeData.dark(), // Dark theme

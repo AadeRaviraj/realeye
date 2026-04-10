@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:realeyes/screens/recording_screen.dart';
+import 'package:navaveda/screens/recording_screen.dart';
 
 class InterviewPrepScreen extends StatefulWidget {
   @override
@@ -203,27 +203,27 @@ class _InterviewPrepScreenState extends State<InterviewPrepScreen> {
     // Set title and content based on selected type
     switch (type) {
       case 'daily':
-        title = '🔥 Daily Challenge';
+        title = ' Daily Challenge';
         content = dailyChallenge;
         break;
       case 'question':
-        title = '❓ Question of the Day';
+        title = ' Question of the Day';
         content = questionOfTheDay;
         break;
       case 'weekly':
-        title = '📆 Weekly Challenge';
+        title = ' Weekly Challenge';
         content = weeklyChallenge;
         break;
       case 'active':
-        title = '✅ Active Status';
+        title = ' Active Status';
         content = activeStatus;
         break;
       case 'bookmark':
-        title = '🔖 Bookmarked Questions';
+        title = ' Bookmarked Questions';
         content = 'You have 5 bookmarked questions.';
         break;
       case 'tracker':
-        title = '📊 Question Attempts Tracker';
+        title = ' Question Attempts Tracker';
         content = 'Correct: 10, Incorrect: 3';
         break;
     }
@@ -321,7 +321,7 @@ class _InterviewPrepScreenState extends State<InterviewPrepScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '📊 AI Feedback Summary',
+              ' AI Feedback Summary',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),

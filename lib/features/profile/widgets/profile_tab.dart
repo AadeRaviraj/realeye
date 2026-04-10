@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
 import 'package:provider/provider.dart';
-import 'package:realeyes/features/profile/providers/profile_provider.dart';
-import 'package:realeyes/features/profile/screens/subscription_screen.dart';
-import 'package:realeyes/models/dashboard_data.dart';
+import 'package:navaveda/features/profile/providers/profile_provider.dart';
+import 'package:navaveda/features/profile/screens/subscription_screen.dart';
+import 'package:navaveda/models/dashboard_data.dart';
 
 class ProfileTab extends StatefulWidget {
   const ProfileTab({Key? key}) : super(key: key);
@@ -199,77 +199,77 @@ class _ProgressCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 90,
-            height: 90,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 8,
-                  backgroundColor: Colors.white.withOpacity(0.25),
-                  valueColor:
-                      const AlwaysStoppedAnimation(Colors.white),
-                ),
-                Text(
-                  '${completionPercentage.toInt()}%',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Learning Progress',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold)),
-                const SizedBox(height: 6),
-                Text(
-                  'Completed ${completionPercentage.toStringAsFixed(1)}% of all subtopics',
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.85),
-                      fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: onCelebrate,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.celebration,
-                            color: Colors.white, size: 16),
-                        SizedBox(width: 6),
-                        Text('Celebrate!',
-                            style: TextStyle(
-                                color: Colors.white, fontSize: 13)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      // padding: const EdgeInsets.all(20),
+      // child: Row(
+      //   children: [
+      //     SizedBox(
+      //       width: 90,
+      //       height: 90,
+      //       child: Stack(
+      //         alignment: Alignment.center,
+      //         children: [
+      //           CircularProgressIndicator(
+      //             value: progress,
+      //             strokeWidth: 8,
+      //             backgroundColor: Colors.white.withOpacity(0.25),
+      //             valueColor:
+      //                 const AlwaysStoppedAnimation(Colors.white),
+      //           ),
+      //           Text(
+      //             '${completionPercentage.toInt()}%',
+      //             style: const TextStyle(
+      //                 color: Colors.white,
+      //                 fontSize: 18,
+      //                 fontWeight: FontWeight.bold),
+      //           ),
+      //         ],
+      //       ),
+      //     ),
+      //     const SizedBox(width: 20),
+      //     // Expanded(
+      //     //   child: Column(
+      //     //     crossAxisAlignment: CrossAxisAlignment.start,
+      //     //     children: [
+      //     //       const Text('Learning Progress',
+      //     //           style: TextStyle(
+      //     //               color: Colors.white,
+      //     //               fontSize: 17,
+      //     //               fontWeight: FontWeight.bold)),
+      //     //       const SizedBox(height: 6),
+      //     //       Text(
+      //     //         'Completed ${completionPercentage.toStringAsFixed(1)}% of all subtopics',
+      //     //         style: TextStyle(
+      //     //             color: Colors.white.withOpacity(0.85),
+      //     //             fontSize: 13),
+      //     //       ),
+      //     //       const SizedBox(height: 12),
+      //     //       GestureDetector(
+      //     //         onTap: onCelebrate,
+      //     //         child: Container(
+      //     //           padding: const EdgeInsets.symmetric(
+      //     //               horizontal: 14, vertical: 6),
+      //     //           decoration: BoxDecoration(
+      //     //             color: Colors.white.withOpacity(0.2),
+      //     //             borderRadius: BorderRadius.circular(20),
+      //     //           ),
+      //     //           child: const Row(
+      //     //             mainAxisSize: MainAxisSize.min,
+      //     //             children: [
+      //     //               Icon(Icons.celebration,
+      //     //                   color: Colors.white, size: 16),
+      //     //               SizedBox(width: 6),
+      //     //               Text('Celebrate!',
+      //     //                   style: TextStyle(
+      //     //                       color: Colors.white, fontSize: 13)),
+      //     //             ],
+      //     //           ),
+      //     //         ),
+      //     //       ),
+      //     //     ],
+      //     //   ),
+      //     // ),
+      //   ],
+      // ),
     );
   }
 }

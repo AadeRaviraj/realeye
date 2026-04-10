@@ -4,9 +4,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:realeyes/features/profile/providers/profile_provider.dart';
-import 'package:realeyes/models/DailyStat.dart';
-import 'package:realeyes/models/dashboard_data.dart';
+import 'package:navaveda/features/profile/providers/profile_provider.dart';
+import 'package:navaveda/models/DailyStat.dart';
+import 'package:navaveda/models/dashboard_data.dart';
 
 class StatsTab extends StatelessWidget {
   const StatsTab({Key? key}) : super(key: key);

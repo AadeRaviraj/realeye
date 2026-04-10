@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:realeyes/models/dashboard_data.dart';
-import 'package:realeyes/services/api_service.dart';
+import 'package:navaveda/models/dashboard_data.dart';
+import 'package:navaveda/services/api_service.dart';
 
 class DashboardScreen extends StatelessWidget {
   final String firebaseUid;  // changed from int userId

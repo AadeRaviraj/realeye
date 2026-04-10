@@ -1,11 +1,11 @@
 // lib/screens/subtopics_screen.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:realeyes/models/subtopic.dart';
-import 'package:realeyes/services/api_service.dart';
-import 'package:realeyes/screens/notes_screen.dart';
+import 'package:navaveda/models/subtopic.dart';
+import 'package:navaveda/services/api_service.dart';
+import 'package:navaveda/screens/notes_screen.dart';
 
-import 'package:realeyes/features/profile/widgets/ai_chat_fab.dart';
+import 'package:navaveda/features/profile/widgets/ai_chat_fab.dart';
 
 class SubtopicsScreen extends StatefulWidget {
   final int topicId;
@@ -152,12 +152,25 @@ class _SubtopicsScreenState extends State<SubtopicsScreen> {
       backgroundColor: isDark ? const Color(0xFF0F0F0F) : const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: const Text('Subtopics',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+            style: TextStyle(fontWeight: FontWeight.bold),
+
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: isDark ? Colors.white : Colors.black87,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF4776E6), Color(0xFF8E54E9)],
+            ),
+          ),
+        ),
+
       ),
-      floatingActionButton: const AIChatFab(),
+
+      // floatingActionButton: const AIChatFab(),
       body: FutureBuilder<List<Subtopic>>(
         future: _subtopicsFuture,
         builder: (context, snapshot) {
@@ -238,22 +251,30 @@ class _SubtopicsScreenState extends State<SubtopicsScreen> {
       ),
     );
   }
+  void _refreshSubtopics() {
+    setState(() {
+      _subtopicsFuture = ApiService.getSubtopics(widget.topicId, _firebaseUid!);
+    });
+  }
 
   Widget _buildSubtopicCard(BuildContext context, Subtopic subtopic) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isCompleted = subtopic.completed;
 
     return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => NotesScreen(
-            subtopicId: subtopic.id,
-            topicId: widget.topicId,
-            isCompleted: subtopic.completed,
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => NotesScreen(
+              subtopicId: subtopic.id,
+              topicId: widget.topicId,
+              isCompleted: subtopic.completed,
+            ),
           ),
-        ),
-      ),
+        );
+        _refreshSubtopics(); // <-- refresh after returning
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(

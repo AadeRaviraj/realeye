@@ -12,8 +12,8 @@ import '../design/language_provider.dart';
 import '../models/DailyStat.dart';
 import 'signin_screen.dart';
 import 'dart:io'; // For File
-import 'package:realeyes/design/theme_provider.dart';// import theme class providr form services folder
-import 'package:realeyes/generated/app_localizations.dart';
+import 'package:navaveda/design/theme_provider.dart';// import theme class providr form services folder
+import 'package:navaveda/generated/app_localizations.dart';
 import '../models/dashboard_data.dart';
 import '../services/api_service.dart';
 import 'package:flutter/services.dart';
@@ -1948,10 +1948,10 @@ class _ActionsGrid extends StatelessWidget {
           label: 'About Us',
           color: const Color(0xFF8E05C2),
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AboutUsScreen()), // navigate the about screen
-            );
+            // Navigator.push(
+            //   context,
+            //   // MaterialPageRoute(builder: (context) => const AboutUsScreen()), // navigate the about screen
+            // );
           },
         ),
         _ActionButton(
@@ -2014,166 +2014,6 @@ class _ActionButton extends StatelessWidget {
 }
 
 
-// About Us Screen
-class AboutUsScreen extends StatelessWidget {
-  const AboutUsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [Colors.indigo.shade900, Colors.purple.shade900]
-                : [Colors.blue.shade50, Colors.purple.shade50],
-          ),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              AppBar(
-                title: const Text('Dream Team'),
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-              _buildTeamMemberCard(
-                context,
-                name: 'Pooja Borgavi',
-                role: 'Python Developer(Ai)',
-               // image: 'assets/images/pooja.jpeg', // old image
-                image: 'assets/images/pooja2.jpg',
-                color: Colors.pink,
-                info:
-                'Training Models \nCreative Visionary\nML\n - realeye',
-                quote: '"Design is intelligence made visible"',
-              ),
-              _buildTeamMemberCard(
-                context,
-                name: 'Vikaskumar Chaurasiya',
-                role: 'Python Developer(API) / QA Analyst ',
-                image: 'assets/images/vikas.jpg',
-                color: Colors.blueAccent,
-                info:
-                'Bug Hunter Extraordinaire\nQuality Guardian\nTesting Maestro\n - realeye',
-                quote: '"Quality is not an act, it\'s a habit"',
-              ),
-              _buildTeamMemberCard(
-                context,
-                name: 'Raviraj Aade',
-                role: 'Flutter Developer ',
-
-                image: 'assets/images/raviraj2.png', // image: 'assets/images/raviraj.jpg',
-                color: Colors.purple,
-                info: 'Code Architect\nServer Wizard\nDatabase\n - realeye',
-                quote: '"First solve the problem, then write the code"',
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTeamMemberCard(
-      BuildContext context, {
-        required String name,
-        required String role,
-        required String image,
-        required Color color,
-        required String info,
-        required String quote,
-      }) {
-    return Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            colors: [color.withOpacity(0.2), color.withOpacity(0.4)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.1),
-              blurRadius: 20,
-              spreadRadius: 5,
-            )
-          ],
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: AssetImage(image),
-                    backgroundColor: Colors.white,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    name,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(2, 2),
-                        )
-                      ],
-                    ),
-                  ),
-                  Text(
-                    role,
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Divider(color: color.withOpacity(0.3)),
-                  const SizedBox(height: 16),
-                  Text(
-                    info,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    quote,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: color,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        )
-    );
-  }
-}
 
 
 // Setting screen

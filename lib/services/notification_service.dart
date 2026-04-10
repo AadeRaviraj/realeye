@@ -94,9 +94,9 @@ class NotificationService {
     await _createNotificationChannels();
 
     const androidDetails = AndroidNotificationDetails(
-      'realeye_daily',
+      'NavaVeda_daily',
       'Daily Reminders',
-      channelDescription: 'Daily study reminders from Realeye',
+      channelDescription: 'Daily study reminders from NavaVeda',
       importance: Importance.high,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
@@ -113,7 +113,7 @@ class NotificationService {
     await _plugin.zonedSchedule(
       _dailyReminderId,
       '📚 Time to Study!',
-      'Keep your streak alive — open Realeye and learn something new today!',
+      'Keep your streak alive — open NavaVeda and learn something new today!',
       _nextInstanceOfTime(9, 0),
       details,
       androidScheduleMode: androidScheduleMode,
@@ -129,7 +129,7 @@ class NotificationService {
       const channel = AndroidNotificationChannel(
         'realeye_daily',
         'Daily Reminders',
-        description: 'Daily study reminders from Realeye',
+        description: 'Daily study reminders from NavaVeda',
         importance: Importance.high,
       );
       await _plugin.resolvePlatformSpecificImplementation<
@@ -142,13 +142,13 @@ class NotificationService {
     const androidDetails = AndroidNotificationDetails(
       'realeye_daily',  // use the same channel
       'Daily Reminders',
-      channelDescription: 'Daily study reminders from Realeye',
+      channelDescription: 'Daily study reminders from NavaVeda',
       importance: Importance.high,
       priority: Priority.high,
     );
     await _plugin.show(
       0,
-      'Realeye Notifications',
+      'NavaVeda Notifications',
       'Notifications are now enabled! 🎉',
       const NotificationDetails(android: androidDetails),
     );

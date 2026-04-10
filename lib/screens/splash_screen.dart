@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'signin_screen.dart';
 import 'home_screen.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -18,7 +19,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   void initState() {
     super.initState();
     //check teh function to  user is current present or not
-    _checkUserLoginStatus();
+    // _checkUserLoginStatus();
 
     // Fade animation init
     _controller = AnimationController(
@@ -37,7 +38,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
   void _checkUserLoginStatus() async {
     // Wait for 20 seconds  splash screen duration
-    await Future.delayed(Duration(seconds: 20));
+    await Future.delayed(const Duration(seconds: 15));
 
     // Check if the user is already logged in
     User? user = _auth.currentUser;
@@ -67,17 +68,26 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF4A9CFA),
+      backgroundColor: const Color(0xFF000000),
       body: Stack(
         children: [
           Align(
             alignment: Alignment(0, -0.6),
             // to arrange teh image  position in the screen
-            child:
-            Image.asset(
-              'assets/images/eye.png',
-              width: 100,
-              height: 100,
+            // child:
+            //
+            // Image.asset(
+            //   'assets/images/eye.png',
+            //   width: 100,
+            //   height: 100,
+            // ),
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SvgPicture.asset(
+                'assets/images/navaveda_splash_screen.svg',
+                width: 250,
+                height: 250,
+              ),
             ),
           ),
 
@@ -108,22 +118,22 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                         child: AnimatedTextKit(
                           pause: Duration(seconds: 2),
                           animatedTexts: [
-                            RotateAnimatedText('RealEyes'
+                            RotateAnimatedText('सत्य'
                               // textStyle: TextStyle(
                               //   fontSize: 28,
                               //   fontWeight: FontWeight.bold,
                               //   color: Colors.white,
                               // ),
-                            ),
-                            RotateAnimatedText('Realize'),
-                            RotateAnimatedText('Real-Lies'),
+                            ),  // Truth
+                            RotateAnimatedText('तत्त्व'), // Reality / essence
+                            RotateAnimatedText('बोध'),   // Awareness
 
                             // FadeAnimatedText('do IT!'),
                             // FadeAnimatedText('do it RIGHT!!'),
                             // FadeAnimatedText('do it RIGHT NOW!!!'),
 
                             TypewriterAnimatedText(
-                              'From Preparation to Perfection..',
+                              'From Preparation to Perfection...',
                               textStyle: TextStyle(
                                 fontSize: 22, //
                                 fontWeight: FontWeight.w500,

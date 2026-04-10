@@ -278,27 +278,27 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Widget _buildSocialLoginSection(ThemeData theme, Color borderColor) {
     return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(child: Divider(color: borderColor)),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Text('Or sign up with', style: theme.textTheme.bodySmall),
-            ),
-            Expanded(child: Divider(color: borderColor)),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _socialLoginButton('assets/images/google.png', () => print('Google Login')),
-            _socialLoginButton('assets/images/facebook.png', () => print('Facebook Login')),
-            _socialLoginButton('assets/images/twitter.png', () => print('Twitter Login')),
-          ],
-        ),
-      ],
+      // children: [
+      //   Row(
+      //     children: [
+      //       Expanded(child: Divider(color: borderColor)),
+      //       Padding(
+      //         padding: const EdgeInsets.symmetric(horizontal: 10),
+      //         child: Text('Or sign up with', style: theme.textTheme.bodySmall),
+      //       ),
+      //       Expanded(child: Divider(color: borderColor)),
+      //     ],
+      //   ),
+      //   const SizedBox(height: 20),
+        // Row(
+        //   mainAxisAlignment: MainAxisAlignment.center,
+        //   children: [
+        //     _socialLoginButton('assets/images/google.png', () => print('Google Login')),
+        //     _socialLoginButton('assets/images/facebook.png', () => print('Facebook Login')),
+        //     _socialLoginButton('assets/images/twitter.png', () => print('Twitter Login')),
+        //   ],
+        // ),
+      // ],
     );
   }
 
